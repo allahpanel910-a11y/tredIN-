@@ -1,0 +1,2766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b4fcf">
+<meta name="tredin-build" content="PRODUCTION API-READY">
+<meta name="description" content="TredIN trading platform — frontend complete, ready for API integration">
+<title>TredIN — Trading Platform</title>
+<style>
+:root{
+  --blue:#1769e0;
+  --blue2:#123b68;
+  --blue-soft:#eaf1ff;
+  --gold:#c9a227;
+  --gold2:#a8841a;
+  --gold-soft:#fbf6e6;
+  --ink:#0c1829;
+  --muted:#5a6a7e;
+  --line:#e3e9f2;
+  --bg:#f3f6fb;
+  --card:#ffffff;
+  --good:#0d8a4a;
+  --bad:#c92a2a;
+  --warn:#b86e00;
+  --shadow:0 8px 28px rgba(12,35,70,.08);
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh}
+::selection{background:rgba(11,79,207,.15);color:var(--ink)}
+
+/* Production interaction helpers */
+.btn:disabled,.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn.busy{position:relative;pointer-events:none;opacity:.8}
+.btn.busy::after{
+  content:"";width:14px;height:14px;margin-left:8px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;display:inline-block;vertical-align:-2px;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.preapi-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin:0 0 14px;padding:10px 14px;border-radius:12px;
+  background:linear-gradient(135deg,#f7faff 0%,#fbf8ef 100%);
+  border:1px solid rgba(201,162,39,.28);color:#3d4f66;font-size:12px;
+}
+.preapi-banner strong{color:var(--blue)}
+.empty{
+  text-align:center;padding:36px 16px;color:var(--muted);
+  border:1px dashed var(--line);border-radius:12px;background:#fafbfc;
+}
+.skeleton{
+  background:linear-gradient(90deg,#eef2f7 25%,#f7f9fc 50%,#eef2f7 75%);
+  background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:8px;height:14px;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Auth gate — real login shell; OTP appears only when backend requires verification. */
+.auth-gate{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:
+    radial-gradient(1200px 600px at 10% -10%,rgba(11,79,207,.18),transparent 55%),
+    radial-gradient(900px 500px at 100% 0%,rgba(201,162,39,.14),transparent 50%),
+    linear-gradient(165deg,#0c1829 0%,#13233d 45%,#0b4fcf 160%);
+}
+.auth-panel{
+  width:100%;max-width:400px;background:#fff;border-radius:18px;padding:28px 24px 22px;
+  box-shadow:0 28px 60px rgba(0,0,0,.35);border:1px solid rgba(201,162,39,.2);
+}
+.auth-brand{
+  font-size:28px;font-weight:850;letter-spacing:-.6px;text-align:center;
+  background:linear-gradient(135deg,var(--blue),#1a6ef0 55%,var(--gold));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.auth-logo-mark{
+  width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;
+  background:linear-gradient(150deg,#4b96ff 0%,var(--blue) 45%,var(--gold2) 135%);
+  border:1px solid rgba(255,255,255,.5);
+  box-shadow:inset 0 3px 3px rgba(255,255,255,.5),inset 0 -4px 7px rgba(0,0,0,.18),
+             0 5px 0 rgba(8,61,166,.45),0 16px 28px rgba(11,79,207,.35);
+}
+.auth-logo-mark svg{width:32px;height:32px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 2px rgba(0,0,0,.22))}
+.auth-tagline{text-align:center;color:var(--muted);margin:4px 0 14px;font-size:13px}
+.auth-mode-pill{
+  display:block;text-align:center;font-size:10px;font-weight:800;letter-spacing:.06em;
+  color:var(--blue);background:var(--blue-soft);border-radius:999px;padding:5px 10px;margin:0 auto 16px;width:fit-content;
+  border:1px solid #c5d4f5;
+}
+.auth-err{color:var(--bad);font-size:12px;font-weight:700;margin:8px 0 0}
+.auth-panel .field{margin-bottom:12px}
+.auth-panel .field label{display:block;font-size:12px;font-weight:700;color:#4a5a6e;margin-bottom:5px}
+.auth-panel .field input{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;outline:none;
+}
+.auth-panel .field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,79,207,.14)}
+
+/* KYC document upload slots */
+.upload-slot{
+  border:1px dashed #c5d0e0;border-radius:12px;padding:14px;background:#fafbfd;
+  transition:border-color .15s,background .15s;
+}
+.upload-slot.is-uploading{border-color:var(--blue);background:var(--blue-soft)}
+.upload-slot.is-ok{border-color:#b6e4c8;background:#f3fbf6;border-style:solid}
+.upload-slot.is-fail{border-color:#f0b4b4;background:#fff7f7;border-style:solid}
+.upload-slot .us-title{font-weight:750;font-size:13px;margin:0 0 4px}
+.upload-slot .us-meta{font-size:12px;color:var(--muted);margin:0 0 10px}
+.upload-slot .us-progress{
+  height:6px;border-radius:99px;background:#e3e9f2;overflow:hidden;margin:8px 0;
+}
+.upload-slot .us-progress > i{
+  display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#3b82f6);
+  border-radius:99px;transition:width .2s ease;
+}
+.upload-slot .us-file{font-size:12px;font-weight:650;word-break:break-all}
+.upload-slot input[type=file]{font-size:12px;width:100%}
+
+/* ---------- BUTTON MICRO-UX: clean icon + subtle motion ---------- */
+.btn{min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;white-space:nowrap;line-height:1}
+.btn::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.42) 50%,transparent 62%);transform:translateX(-120%);transition:transform .45s ease;pointer-events:none}
+.btn:hover::before{transform:translateX(120%)} .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(1px) scale(.985)}
+.btn .btn-icon{width:24px;height:24px;flex:0 0 24px;display:grid;place-items:center;border-radius:8px;background:rgba(12,35,70,.06);transition:transform .2s ease,box-shadow .2s ease}
+.btn .btn-icon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.btn:hover .btn-icon{transform:translateY(-1px) rotate(-2deg);box-shadow:0 3px 8px rgba(12,35,70,.12)}
+.btn.primary .btn-icon,.btn.gold .btn-icon,.btn.danger .btn-icon{background:rgba(255,255,255,.15);color:#fff}.btn.ghost .btn-icon{background:rgba(11,79,207,.08);color:var(--blue)}
+.btn.busy .btn-icon{animation:buttonIconPulse .9s ease-in-out infinite}@keyframes buttonIconPulse{50%{transform:scale(.88);opacity:.7}}
+@media(max-width:760px){.btn{min-height:40px;padding:9px 12px}.btn .btn-icon{width:23px;height:23px;flex-basis:23px}}
+@media(prefers-reduced-motion:reduce){.btn,.btn::before,.btn .btn-icon{transition:none!important;animation:none!important}.btn:hover,.btn:active{transform:none}}
+
+/* ---------- CINEMATIC 3D BUTTON SYSTEM ---------- */
+.btn{
+  border-radius:12px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.65) inset,
+    0 -6px 10px rgba(12,35,70,.05) inset,
+    0 1px 0 rgba(12,35,70,.06),
+    0 8px 18px rgba(12,35,70,.12);
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,filter .16s ease;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -6px 10px rgba(12,35,70,.05) inset,0 2px 0 rgba(12,35,70,.08),0 14px 26px rgba(12,35,70,.16)}
+.btn:active{transform:translateY(1px) scale(.98);box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 2px 6px rgba(12,35,70,.14)}
+.btn.primary{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 3px 0 var(--blue2),0 14px 26px rgba(11,79,207,.32)}
+.btn.primary:hover{box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 4px 0 var(--blue2),0 18px 32px rgba(11,79,207,.38)}
+.btn.primary:active{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 1px 0 var(--blue2),0 6px 14px rgba(11,79,207,.26)}
+.btn.danger{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 #8f1a22,0 14px 24px rgba(201,42,42,.30)}
+.btn.danger:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 #8f1a22,0 18px 30px rgba(201,42,42,.36)}
+.btn.trade-buy{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 #086b3b,0 14px 24px rgba(13,138,74,.28)!important}
+.btn.trade-buy:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 #086b3b,0 18px 30px rgba(13,138,74,.34)!important}
+.btn.trade-sell{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 #8f1a22,0 14px 24px rgba(201,42,42,.28)!important}
+.btn.trade-sell:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 #8f1a22,0 18px 30px rgba(201,42,42,.34)!important}
+.btn.gold{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 var(--gold2),0 14px 24px rgba(201,162,39,.30)}
+.btn.gold:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 var(--gold2),0 18px 30px rgba(201,162,39,.36)}
+.btn.ghost{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 3px 0 #b6cff7,0 10px 18px rgba(11,79,207,.16)}
+
+/* app-icon style 3D badge for icons inside buttons */
+.btn .btn-icon{
+  border-radius:8px;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.55),
+    inset 0 -2px 3px rgba(0,0,0,.14),
+    0 2px 5px rgba(0,0,0,.18);
+}
+.btn.primary .btn-icon,.btn.danger .btn-icon,.btn.gold .btn-icon,.btn.trade-buy .btn-icon,.btn.trade-sell .btn-icon{
+  background:rgba(255,255,255,.20);
+}
+.btn:hover .btn-icon{transform:translateY(-1px) rotate(-4deg) scale(1.06)}
+.btn:active .btn-icon{transform:translateY(0) scale(.94)}
+
+/* Compact action buttons inside data tables (Manage/View/Details/Open etc.) */
+.table td .btn{min-height:30px!important;padding:6px 10px!important;font-size:12px;border-radius:9px;gap:5px}
+.table td .btn .btn-icon{width:16px!important;height:16px!important;flex-basis:16px!important;border-radius:6px}
+.table td .btn .btn-icon svg{width:10px!important;height:10px!important}
+
+@media(prefers-reduced-motion:reduce){
+  .btn,.btn .btn-icon{transition:none!important}
+  .btn:hover,.btn:active,.btn:hover .btn-icon,.btn:active .btn-icon{transform:none!important}
+}
+
+/* ---------- TRADING ACTION BUTTONS: professional execution UI ---------- */
+.trade-action{min-height:44px!important;min-width:108px;padding:10px 16px!important;border-radius:11px!important;font-weight:800!important;letter-spacing:.01em;position:relative;isolation:isolate;box-shadow:0 5px 14px rgba(12,35,70,.10)!important}
+.trade-action .btn-icon{width:27px!important;height:27px!important;flex-basis:27px!important;border-radius:9px!important}
+.trade-action .btn-icon svg{width:15px!important;height:15px!important;stroke-width:2.1!important}
+.trade-buy{background:linear-gradient(145deg,#118a55,#08733f)!important;color:#fff!important;border-color:#086b3b!important;box-shadow:0 6px 16px rgba(13,138,74,.25)!important}
+.trade-buy:hover{background:linear-gradient(145deg,#16a565,#08733f)!important;box-shadow:0 9px 20px rgba(13,138,74,.32)!important}
+.trade-sell{background:linear-gradient(145deg,#d04444,#b51f2a)!important;color:#fff!important;border-color:#a91c27!important;box-shadow:0 6px 16px rgba(201,42,42,.23)!important}
+.trade-sell:hover{background:linear-gradient(145deg,#e15252,#b51f2a)!important;box-shadow:0 9px 20px rgba(201,42,42,.30)!important}
+.order-primary{min-height:46px!important;padding:11px 18px!important;border-radius:12px!important;font-weight:800!important;box-shadow:0 7px 18px rgba(11,79,207,.26)!important}
+.order-primary .btn-icon{width:28px!important;height:28px!important;border-radius:9px!important}
+.order-secondary{min-height:44px!important}
+.order-tabs{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important;padding:5px!important;background:#f4f7fb;border:1px solid var(--line);border-radius:13px;margin-bottom:16px}
+.order-tabs .trade-action{width:100%;border:0!important;box-shadow:none!important;min-height:44px!important}
+.order-tabs .trade-action:not(.trade-buy):not(.trade-sell){background:transparent!important;color:var(--muted)!important}
+.execution-hint{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11px;color:var(--muted)}
+.execution-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px rgba(13,138,74,.10);animation:executionPulse 1.8s ease-in-out infinite}
+@keyframes executionPulse{50%{transform:scale(1.18);opacity:.7}}
+@media(max-width:760px){.trade-action{min-height:42px!important;min-width:96px;padding:9px 12px!important}.order-primary{width:100%;min-height:46px!important}.order-secondary{min-height:42px!important}}
+@media(prefers-reduced-motion:reduce){.execution-dot{animation:none!important}}
+
+/* Top bar */
+.top{
+  height:62px;background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:0 20px;
+  position:sticky;top:0;z-index:30;
+  box-shadow:0 1px 0 rgba(201,162,39,.12);
+}
+.brand{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:22px;font-weight:850;letter-spacing:-.6px;
+  background:linear-gradient(135deg,var(--blue) 0%,#1a6ef0 55%,var(--gold) 130%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.brand-mark{
+  width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(150deg,#4b96ff 0%,#0b4fcf 48%,var(--gold2) 135%);
+  border:1px solid rgba(255,255,255,.5);
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.5),inset 0 -3px 5px rgba(0,0,0,.16),
+             0 3px 0 rgba(8,61,166,.45),0 10px 18px rgba(11,79,207,.32);
+  transition:transform .2s cubic-bezier(.2,.8,.2,1);
+}
+.brand-mark svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 1px rgba(0,0,0,.22))}
+.brand:hover .brand-mark{transform:translateY(-1px) rotate(-4deg)}
+@media(prefers-reduced-motion:reduce){.brand-mark{transition:none!important}.brand:hover .brand-mark{transform:none!important}}
+.search{flex:1;max-width:440px}
+.search input{
+  width:100%;border:1px solid var(--line);border-radius:11px;
+  padding:10px 14px;outline:none;background:#fafbfc;transition:.18s;
+}
+.search input:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,79,207,.14);
+  background:#fff;
+}
+.top-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pill,.btn{
+  border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:8px 14px;font-weight:650;color:var(--ink);transition:.18s ease;
+}
+.pill:hover,.btn:hover{background:#f5f8fc;border-color:#cfd8e6}
+.btn.primary{
+  background:linear-gradient(145deg,var(--blue),var(--blue2));
+  color:#fff;border-color:var(--blue2);
+  box-shadow:0 4px 12px rgba(11,79,207,.28);
+}
+.btn.primary:hover{
+  background:linear-gradient(145deg,#1a63e0,var(--blue2));
+  box-shadow:0 6px 16px rgba(11,79,207,.35);
+  transform:translateY(-1px);
+}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.ghost{color:var(--blue);border-color:#c5d4f5;background:var(--blue-soft)}
+.btn.ghost:hover{background:#dce8ff;border-color:#a8c0f0}
+.btn.gold{
+  background:linear-gradient(145deg,var(--gold),var(--gold2));
+  color:#fff;border-color:var(--gold2);
+  box-shadow:0 4px 12px rgba(201,162,39,.28);
+}
+.btn.gold:hover{filter:brightness(1.05);transform:translateY(-1px)}
+
+/* Layout */
+.layout{display:flex}
+.side{
+  width:228px;background:linear-gradient(180deg,#ffffff 0%,#fafbfd 100%);
+  border-right:1px solid var(--line);
+  min-height:calc(100vh - 62px);padding:16px 12px;
+  position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto;
+}
+.navgroup{
+  margin:14px 10px 6px;color:#8a95a4;font-size:10px;
+  text-transform:uppercase;font-weight:750;letter-spacing:.55px;
+}
+.nav button{
+  width:100%;text-align:left;border:0;background:transparent;
+  padding:10px 12px;border-radius:10px;color:#354356;font-weight:550;
+  transition:background .15s ease,color .15s ease,box-shadow .15s ease;
+}
+.nav button.active,.nav button:hover{
+  background:var(--blue-soft);color:var(--blue);font-weight:700;
+}
+.nav button.active{
+  box-shadow:inset 3px 0 0 var(--gold);
+}
+.main{flex:1;min-width:0;padding:22px 22px 28px;max-width:1440px;margin:0 auto;width:100%}
+
+/* Page */
+.page-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;margin-bottom:18px;flex-wrap:wrap;
+  padding-bottom:14px;border-bottom:1px solid rgba(227,233,242,.85);
+}
+.page-head h1{
+  font-size:23px;margin:0;font-weight:800;letter-spacing:-.4px;
+  color:var(--ink);
+}
+.sub{color:var(--muted);font-size:13px;margin-top:3px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);box-shadow:var(--shadow);padding:18px;
+  transition:box-shadow .2s ease,border-color .2s ease,transform .2s ease;
+}
+.card:hover{border-color:#cdd8e8;box-shadow:0 10px 32px rgba(12,35,70,.1)}
+/* KPI metric cards */
+.kpi-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(165deg,#ffffff 0%,#f8fafd 100%);
+  border-left:3px solid var(--blue);
+}
+.kpi-card::after{
+  content:"";position:absolute;top:0;right:0;width:56px;height:56px;
+  background:radial-gradient(circle at top right,rgba(201,162,39,.12),transparent 70%);
+  pointer-events:none;
+}
+.card .label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.metric{
+  font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-.5px;
+  font-variant-numeric:tabular-nums;color:#0f1c2e;
+}
+.kpi-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35}
+.section{margin-top:20px}
+.section h2{
+  font-size:15px;margin:0 0 12px;font-weight:750;letter-spacing:-.2px;
+  color:#1a2740;
+}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* Tables */
+.tablewrap{overflow:auto;border-radius:10px}
+.table{width:100%;border-collapse:collapse;min-width:640px}
+.table th,.table td{
+  text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.table th{
+  font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:750;
+  letter-spacing:.35px;background:#f8fafc;
+}
+.table tbody tr{transition:background .12s ease}
+.table tbody tr:hover{background:#f7f9fc}
+.positive{color:var(--good);font-weight:750}
+.negative{color:var(--bad);font-weight:750}
+.tag{
+  display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;
+  background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:750;
+  letter-spacing:.2px;
+}
+.tag.good{background:#e6f7ef;color:var(--good)}
+.tag.bad{background:#fff0f0;color:var(--bad)}
+.tag.warn{background:#fff8e6;color:var(--warn)}
+.tag.gold{background:var(--gold-soft);color:var(--gold2)}
+
+/* Instrument cards */
+.instrument{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.instrument h3{margin:0;font-size:15px;font-weight:750;letter-spacing:-.2px}
+.price{font-size:21px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.chart{
+  height:240px;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,#fff 0%,#f6f9fc 100%);position:relative;overflow:hidden;
+}
+.chart svg{width:100%;height:100%}
+
+/* Forms */
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.field label{
+  display:block;color:#4a5a6e;font-size:12px;font-weight:700;
+  margin-bottom:5px;letter-spacing:.15px;
+}
+.field input,.field select{
+  width:100%;padding:10px 12px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;outline:none;transition:.18s ease;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,79,207,.14);
+}
+.order-tabs{display:flex;gap:8px;margin-bottom:14px}
+.order-tabs button{flex:1;padding:10px}
+.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.check{
+  padding:12px;border:1px solid var(--line);border-radius:11px;
+  background:linear-gradient(180deg,#fcfdff,#f7f9fc);
+}
+
+/* Auth / KYC / Steppers */
+.auth-wrap{max-width:720px;margin:20px auto}
+.auth-card{max-width:640px;margin:auto}
+.auth-badge{
+  display:inline-flex;padding:5px 10px;border-radius:999px;
+  background:linear-gradient(135deg,var(--blue-soft),var(--gold-soft));
+  color:var(--blue);font-size:11px;font-weight:800;margin-bottom:8px;
+  border:1px solid rgba(201,162,39,.2);
+}
+.kyc-steps{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0 16px}
+.kyc-step{border:1px solid var(--line);border-radius:10px;padding:8px 4px;background:#fff;color:var(--muted);text-align:center}
+.kyc-step b{display:block;width:22px;height:22px;line-height:22px;margin:0 auto 3px;border-radius:50%;background:#eef2f7;font-size:11px}
+.kyc-step.current{border-color:#b6cff7;color:var(--blue);box-shadow:0 0 0 2px rgba(11,79,207,.12),0 0 0 4px rgba(201,162,39,.08)}
+.kyc-step.current b,.kyc-step.done b{background:linear-gradient(145deg,var(--blue),var(--blue2));color:#fff}
+.kyc-step.done{border-color:#c5d8f5}
+.kyc-step span{font-size:10px;font-weight:700}
+.kyc-card{min-height:320px}
+.review-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.review-grid .card{box-shadow:none;background:#fafbfc}
+.review-grid h3{margin:0 0 4px;font-size:13px}
+.review-grid p{margin:3px 0;font-size:13px}
+.checkline{display:flex;gap:8px;align-items:flex-start;color:#39485b}
+.checkline input{margin-top:3px}
+.verify-box{border:1px solid var(--line);border-radius:12px;background:#fafbfc;padding:14px}
+.security-note{border:1px solid var(--line);border-radius:12px;background:#fafbfc;padding:12px}
+.security-note span{display:block;color:var(--muted);margin-top:3px;font-size:12px}
+.stepper-mini{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.stepper-mini .step-pill{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:var(--muted)}
+.stepper-mini .step-pill.current{background:var(--blue-soft);border-color:#b6cff7;color:var(--blue)}
+.stepper-mini .step-pill.done{background:#e6f7ef;border-color:#b6e4c8;color:var(--good)}
+@media(max-width:760px){
+  .kyc-steps{grid-template-columns:repeat(2,1fr)}
+  .kyc-step:last-child{grid-column:1/-1}
+  .review-grid{grid-template-columns:1fr}
+}
+
+/* Quick actions — blue / white / gold polish + cool icon motion */
+.action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.action-3d{
+  position:relative;overflow:hidden;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;min-height:108px;
+  padding:14px 10px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(160deg,#ffffff 0%,#f7f9fc 100%);
+  box-shadow:0 6px 0 #d5dce8,0 12px 22px rgba(12,35,70,.07);
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,border-color .22s ease;
+}
+.action-3d::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);
+  transform:translateX(-130%);transition:transform .55s ease;
+}
+.action-3d:hover::before{transform:translateX(130%)}
+.action-3d:hover{
+  transform:translateY(-5px);
+  box-shadow:0 10px 0 #cfd7e4,0 18px 28px rgba(12,35,70,.12);
+  border-color:#c5d4f0;
+}
+.action-3d:active{transform:translateY(2px);box-shadow:0 3px 0 #d5dce8,0 6px 12px rgba(12,35,70,.08)}
+.symbol-3d{
+  width:46px;height:46px;display:grid;place-items:center;border-radius:13px;
+  font-size:20px;line-height:1;color:#fff;
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.45),3px 4px 0 rgba(0,0,0,.08),0 8px 16px rgba(12,35,70,.15);
+  animation:iconFloat 3.2s ease-in-out infinite;
+  will-change:transform;
+}
+.action-3d:nth-child(2) .symbol-3d{animation-delay:.35s}
+.action-3d:nth-child(3) .symbol-3d{animation-delay:.7s}
+.action-3d:nth-child(4) .symbol-3d{animation-delay:1.05s}
+.action-3d.trade .symbol-3d{background:linear-gradient(145deg,#3d8cff,#0b4fcf)}
+.action-3d.orders .symbol-3d{background:linear-gradient(145deg,#e0b84a,var(--gold2))}
+.action-3d.positions .symbol-3d{background:linear-gradient(145deg,#7c5cbf,#4c2d91)}
+.action-3d.portfolio .symbol-3d{background:linear-gradient(145deg,#2ecf8a,#0a7a4a)}
+.action-3d.trade{border-color:#b9d0ff}
+.action-3d.orders{border-color:#ead9a0}
+.action-3d.positions{border-color:#d2c2f0}
+.action-3d.portfolio{border-color:#b5e4cb}
+.action-label{font-size:12px;font-weight:850;color:#1a2740;letter-spacing:.2px}
+@keyframes iconFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-3px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .action-3d,.symbol-3d,.action-3d::before{animation:none!important;transition:none!important}
+}
+
+
+/* ---------- PHASE 04: WORLD-CLASS CARD SYSTEM ---------- */
+.card{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(145deg,#fff 0%,#fbfcfe 100%);
+  border:1px solid rgba(20,48,86,.10);
+  border-radius:16px;
+  box-shadow:0 7px 24px rgba(12,35,70,.065);
+  padding:18px;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),
+             box-shadow .22s ease,border-color .22s ease;
+}
+.card::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(120deg,rgba(255,255,255,.42),transparent 35%);
+  opacity:.55;
+}
+.card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(11,79,207,.18);
+  box-shadow:0 12px 32px rgba(12,35,70,.10);
+}
+.card > *{position:relative;z-index:1}
+.kpi-card{
+  min-height:118px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.kpi-card .label{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;color:#65758a;
+}
+.kpi-card .label::before{
+  content:"";width:6px;height:6px;border-radius:50%;
+  background:var(--blue);box-shadow:0 0 0 4px var(--blue-soft);
+}
+.kpi-card .metric{
+  margin-top:6px;font-size:24px;line-height:1.15;
+  font-weight:900;letter-spacing:-.02em;color:var(--ink);
+}
+.instrument{
+  min-height:106px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+}
+.instrument h3{margin:0 0 2px;font-size:16px}
+.instrument .price{font-size:17px;font-weight:900}
+.instrument .btn{position:relative;z-index:2}
+.section > h2,.card > h2{
+  letter-spacing:-.01em;
+}
+.action-3d{
+  min-height:112px;
+}
+.action-3d:focus-visible,
+.btn:focus-visible,
+.mobile-nav button:focus-visible{
+  outline:3px solid rgba(11,79,207,.25);
+  outline-offset:2px;
+}
+.tablewrap{
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:auto;
+  background:#fff;
+}
+.table{min-width:620px}
+.tag{
+  white-space:nowrap;
+  font-weight:800;
+}
+.empty{
+  min-height:120px;
+  display:grid;place-items:center;
+}
+@media(max-width:900px){
+  .kpi-card{min-height:108px}
+  .instrument{min-height:100px}
+}
+@media(max-width:760px){
+  .card{padding:15px;border-radius:14px}
+  .kpi-card{min-height:100px}
+  .kpi-card .metric{font-size:21px}
+  .instrument{align-items:flex-start}
+  .instrument .btn{padding:7px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .card{transition:none}
+  .card:hover{transform:none}
+}
+
+/* Modal & toast */
+.modalbg{
+  position:fixed;inset:0;background:rgba(7,18,36,.58);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:16px;
+  backdrop-filter:blur(3px);
+}
+.modal{
+  background:#fff;border-radius:18px;max-width:620px;width:100%;
+  max-height:88vh;overflow:auto;padding:22px;
+  box-shadow:0 28px 70px rgba(7,18,36,.28);
+  border:1px solid rgba(201,162,39,.12);
+}
+.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modalhead h2{margin:0;font-size:18px}
+.close{border:0;background:#eef2f7;border-radius:9px;padding:7px 11px;font-size:16px;transition:.15s}
+.close:hover{background:#e2e8f0}
+.toast{
+  position:fixed;right:16px;bottom:16px;background:linear-gradient(135deg,#0c1829,#15263d);
+  color:#fff;padding:12px 16px;border-radius:12px;display:none;z-index:100;
+  box-shadow:0 10px 28px rgba(0,0,0,.28);font-size:13px;
+  border-left:3px solid var(--gold);
+}
+
+/* Footer */
+.footer{padding:20px 0;color:var(--muted);font-size:12px;text-align:center}
+
+/* Responsive — laptop / tablet / mobile */
+.mobile-nav{display:none}
+@media(max-width:1280px){
+  .main{padding:18px 16px}
+  .side{width:210px}
+}
+@media(max-width:1050px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .side{width:196px}
+  .search{max-width:280px}
+}
+@media(max-width:900px){
+  .g3{grid-template-columns:repeat(2,1fr)}
+  .action-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:760px){
+  .top{height:56px;padding:0 12px;gap:10px}
+  .brand{font-size:19px}
+  .search{display:none}
+  .side{display:none}
+  .main{padding:14px 12px 92px}
+  .g4,.g3,.g2,.formgrid{grid-template-columns:1fr}
+  .action-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .action-3d{min-height:92px;padding:12px 8px}
+  .symbol-3d{width:40px;height:40px;font-size:18px}
+  .mobile-nav{
+    position:fixed;display:grid;grid-template-columns:repeat(5,1fr);
+    left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.92);
+    border:1px solid rgba(201,162,39,.16);border-radius:20px;
+    z-index:40;padding:8px 6px;gap:2px;
+    box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 18px 36px rgba(12,35,70,.20),0 4px 10px rgba(12,35,70,.10);
+    backdrop-filter:blur(18px) saturate(1.3);
+  }
+  .mobile-nav button{
+    border:1px solid transparent;background:transparent;border-radius:14px;
+    padding:6px 2px 5px;font-size:10px;font-weight:700;color:#5a6a7e;
+    line-height:1.1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    transition:transform .15s ease,background .15s ease,color .15s ease,border-color .15s ease;
+  }
+  .mobile-nav .mnav-ico{
+    font-size:18px;line-height:1.2;width:36px;height:28px;
+    display:grid;place-items:center;border-radius:10px;
+  }
+  .mobile-nav .mnav-txt{font-size:10px;letter-spacing:.1px}
+  .mobile-nav button.active{
+    color:var(--blue);background:var(--blue-soft);border-color:#c5d6f5;
+  }
+  .mobile-nav button.active .mnav-ico{
+    background:linear-gradient(145deg,var(--blue),var(--blue2));
+    color:#fff;box-shadow:0 3px 8px rgba(11,79,207,.3);
+  }
+  .mobile-nav button.mnav-trade .mnav-ico{
+    background:linear-gradient(145deg,var(--gold),var(--gold2));
+    color:#fff;box-shadow:0 3px 8px rgba(201,162,39,.3);
+  }
+  .mobile-nav button.mnav-trade.active .mnav-ico{
+    background:linear-gradient(145deg,var(--blue),var(--blue2));
+  }
+  .mobile-nav button:active{transform:scale(.95)}
+  .mobile-nav button.active{transform:translateY(-2px)}
+  .mobile-nav button.mnav-trade{margin-top:-24px}
+  .mobile-nav button.mnav-trade .mnav-ico{width:54px;height:54px;background:transparent}
+  .mobile-nav button.mnav-trade .mnav-ico .ti3d{
+    width:54px;height:54px;flex-basis:54px;border-radius:17px;
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.85),0 4px 0 rgba(143,109,15,.55),0 16px 26px rgba(201,162,39,.42);
+  }
+  .mobile-nav button.mnav-trade .mnav-ico .ti3d svg{width:23px;height:23px}
+  .mobile-nav button.mnav-trade .mnav-txt{margin-top:3px;color:var(--gold2);font-weight:800}
+  .mobile-nav button.mnav-trade:hover .mnav-ico .ti3d,.mobile-nav button.mnav-trade:active .mnav-ico .ti3d{transform:translateY(-2px)}
+  .mobile-nav button.mnav-trade.active .mnav-txt{color:var(--gold2)}
+  .page-head h1{font-size:19px}
+  .card{padding:13px}
+  .checks{grid-template-columns:1fr}
+  .table{min-width:560px}
+  .top-right .pill:first-child{padding:7px 10px}
+}
+
+/* =========================================================
+   TredIN — WORLD-CLASS 3D ICON ENGINE v1
+   CSS shell + inline SVG geometry; decorative icons remain
+   accessible through their surrounding button labels.
+   ========================================================= */
+.ti3d{position:relative;width:40px;height:40px;display:grid;place-items:center;flex:0 0 40px;border-radius:12px;color:#fff;background:linear-gradient(145deg,#ffffff 0%,#eef3fa 42%,#dbe4f1 100%);border:1px solid rgba(255,255,255,.9);box-shadow:inset 0 2px 2px rgba(255,255,255,.9),inset 0 -3px 6px rgba(12,35,70,.08),0 3px 0 rgba(12,35,70,.10),0 8px 16px rgba(12,35,70,.12);transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,filter .22s ease;isolation:isolate}
+.ti3d::before{content:"";position:absolute;inset:4px;border-radius:9px;background:linear-gradient(145deg,rgba(255,255,255,.38),transparent 48%);pointer-events:none}
+.ti3d::after{content:"";position:absolute;inset:-5px;border-radius:15px;background:radial-gradient(circle,rgba(11,79,207,.18),transparent 68%);opacity:0;transform:scale(.82);transition:opacity .22s ease,transform .22s ease;z-index:-1}
+.ti3d svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18));position:relative;z-index:1}
+.ti3d.blue{background:linear-gradient(145deg,#4b96ff 0%,#0b4fcf 58%,#073486 100%);color:#fff}
+.ti3d.gold{background:linear-gradient(145deg,#f1d477 0%,#c9a227 55%,#8f6d0f 100%);color:#fff}
+.ti3d.green{background:linear-gradient(145deg,#49d79b 0%,#0d8a4a 58%,#075d34 100%);color:#fff}
+.ti3d.purple{background:linear-gradient(145deg,#9c7ce1 0%,#6040a0 58%,#3b246c 100%);color:#fff}
+.ti3d.dark{background:linear-gradient(145deg,#50647e 0%,#24364f 58%,#101d30 100%);color:#fff}
+.nav button{display:flex;align-items:center;gap:10px}
+.nav button .ti3d{width:30px;height:30px;flex-basis:30px;border-radius:9px;box-shadow:inset 0 1px 2px rgba(255,255,255,.8),0 2px 0 rgba(12,35,70,.08),0 5px 10px rgba(12,35,70,.08)}
+.nav button .ti3d svg{width:16px;height:16px}
+.nav button:hover .ti3d,.nav button.active .ti3d{transform:translateY(-1px) rotateX(5deg);box-shadow:inset 0 2px 2px rgba(255,255,255,.9),0 3px 0 rgba(12,35,70,.10),0 8px 15px rgba(11,79,207,.16)}
+.nav button.active .ti3d::after{opacity:1;transform:scale(1)}
+.top-right .notif-3d{display:inline-grid;vertical-align:middle;margin-right:6px}
+.top-right .notif-3d svg{width:15px;height:15px}
+.action-3d .ti3d{width:48px;height:48px;flex-basis:48px;border-radius:14px;animation:iconFloat 3.2s ease-in-out infinite}
+.action-3d:hover .ti3d{transform:translateY(-3px) rotateX(6deg) rotateY(-4deg);filter:saturate(1.08)}
+.action-3d:active .ti3d{transform:translateY(2px) scale(.97)}
+.mobile-nav .mnav-ico{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;position:relative;overflow:visible}
+.mobile-nav .mnav-ico .ti3d{width:30px;height:30px;flex-basis:30px;border-radius:9px;box-shadow:inset 0 1px 2px rgba(255,255,255,.85),0 2px 0 rgba(12,35,70,.08),0 5px 10px rgba(12,35,70,.09)}
+.mobile-nav .mnav-ico .ti3d svg{width:15px;height:15px}
+.mobile-nav button.active .mnav-ico .ti3d,.mobile-nav button:focus-visible .mnav-ico .ti3d{transform:translateY(-1px)}
+.icon-status{display:inline-flex;align-items:center;gap:7px}
+.icon-status .ti3d{width:24px;height:24px;flex-basis:24px;border-radius:7px}
+.icon-status .ti3d svg{width:13px;height:13px}
+@media(prefers-reduced-motion:reduce){.ti3d,.ti3d::after,.action-3d .ti3d{animation:none!important;transition:none!important}.nav button:hover .ti3d,.nav button.active .ti3d,.action-3d:hover .ti3d{transform:none!important}}
+
+
+/* =========================================================
+   TREDIN V11 — TRADING UX FINAL LOCK
+   Order lifecycle rail + semantic execution states
+   ========================================================= */
+.lifecycle-rail{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin:14px 0 4px}
+.lifecycle-step{position:relative;min-width:0;padding:10px 7px;border:1px solid var(--line);border-radius:11px;background:linear-gradient(180deg,#fff,#f7f9fc);text-align:center;font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--muted);transition:.2s ease}
+.lifecycle-step::before{content:"";display:block;width:8px;height:8px;margin:0 auto 6px;border-radius:50%;background:#c9d2df;box-shadow:0 0 0 3px #eef2f7}
+.lifecycle-step.done{color:var(--good);border-color:#bfe5d0;background:linear-gradient(180deg,#fff,#f4fbf7)}
+.lifecycle-step.done::before{background:var(--good);box-shadow:0 0 0 3px #e1f3e8}
+.lifecycle-step.current{color:var(--blue);border-color:#b9cff5;background:linear-gradient(180deg,#fff,#f2f6ff);box-shadow:0 6px 18px rgba(11,79,207,.09)}
+.lifecycle-step.current::before{background:var(--blue);box-shadow:0 0 0 3px #dce8ff}
+.lifecycle-step.failed{color:var(--bad);border-color:#efc2c2;background:#fff7f7}
+.lifecycle-step.failed::before{background:var(--bad);box-shadow:0 0 0 3px #fde7e7}
+.status-panel{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f8fafc)}
+.status-panel strong{font-size:13px}.status-panel .muted{font-size:12px}
+@media(max-width:700px){.lifecycle-rail{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.lifecycle-step{padding:8px 4px;font-size:9px}}
+@media(max-width:420px){.lifecycle-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.lifecycle-step{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.lifecycle-step{transition:none}}
+/* API-ready state system */
+.api-boundary{white-space:nowrap}.state-panel{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:14px;display:flex;align-items:flex-start;gap:10px}.state-panel.loading{background:linear-gradient(90deg,#fff,#f5f8fc,#fff);background-size:200% 100%;animation:tredinShimmer 1.5s linear infinite}.state-panel.error{border-color:#efb8b8;background:#fff7f7}.state-panel.success{border-color:#b7dfc7;background:#f5fff8}@keyframes tredinShimmer{to{background-position:-200% 0}}@media(max-width:700px){.api-boundary{font-size:9px}.state-panel{padding:11px}}@media(prefers-reduced-motion:reduce){.state-panel.loading{animation:none}}
+</style>
+
+<style id="tredin-step2-design-lock">
+/* STEP 2 — locked visual system */
+:root{--focus:#1769e0;--buy:#16a34a;--sell:#dc2626;--pending:#f59e0b}
+body{background:var(--bg)}
+.card{border-radius:14px;box-shadow:0 6px 22px rgba(15,23,42,.055)}
+.card:hover{border-color:#cbd5e1;box-shadow:0 10px 28px rgba(15,23,42,.08)}
+.btn.primary{background:linear-gradient(145deg,#1769e0,#123b68);border-color:#123b68}
+.btn.good{background:#16a34a;border-color:#16a34a}
+.btn.danger{background:#dc2626;border-color:#dc2626}
+.tag{font-weight:750}
+.tag.gold{color:#8a682f;background:#fbf6e6}
+input:focus,select:focus,textarea:focus{outline:0;border-color:#1769e0!important;box-shadow:0 0 0 3px rgba(23,105,224,.12)}
+</style>
+
+<style id="tredin-step4-state-architecture">
+.api-state-note{display:flex;align-items:center;gap:8px;margin:10px 0;padding:9px 12px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;color:#475569;font-size:12px}
+.api-state-note strong{color:#123b68}
+</style>
+
+<style>
+/* V10 unified design-system layer */
+:root{--focus:rgba(11,79,207,.28);--success-soft:#eaf8f0;--danger-soft:#fff0f0;--warning-soft:#fff7e8;--info-soft:#eef5ff;--radius-sm:10px;--radius-md:14px;--radius-lg:18px}
+:where(button,a,input,select,textarea):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.ui-state{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--card);font-size:13px;font-weight:700}
+.ui-state::before{content:"";width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 10%,transparent)}
+.ui-state.success{color:var(--good);background:var(--success-soft);border-color:#ccebd9}.ui-state.error{color:var(--bad);background:var(--danger-soft);border-color:#f2caca}.ui-state.warning{color:var(--warn);background:var(--warning-soft);border-color:#f0ddb8}.ui-state.info{color:var(--blue);background:var(--info-soft);border-color:#cddcff}
+.ui-loading{position:relative;overflow:hidden;color:transparent!important;background:linear-gradient(100deg,#eef2f7 30%,#fff 45%,#eef2f7 60%);background-size:220% 100%;animation:tredinShimmer 1.25s linear infinite;border-color:transparent}
+.ui-loading>*{visibility:hidden}.ui-loading::after{content:"";position:absolute;left:12px;right:12px;top:50%;height:8px;transform:translateY(-50%);border-radius:99px;background:rgba(90,106,126,.14)}
+@keyframes tredinShimmer{to{background-position:-220% 0}}
+.api-boundary{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--muted);background:#f7f9fc;border:1px dashed #cbd5e3;border-radius:8px;padding:5px 8px;display:inline-flex;align-items:center;gap:6px}
+@media(max-width:700px){.ui-state{min-height:42px}.api-boundary{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ui-loading{animation:none;background:#eef2f7}}
+</style>
+<meta name="tredin-api-base-url" content="" data-api-base-url="">
+<script>
+/* API CONNECT STEP 1 — environment binding. No URL is invented here. */
+window.TREDIN_CONFIG=window.TREDIN_CONFIG||{apiBaseUrl:""};
+window.TREDIN_API_ENV={
+  configured(){return !!(window.TREDIN_CONFIG.apiBaseUrl||document.documentElement.dataset.apiBaseUrl);},
+  require(){if(!this.configured()) throw new Error("Backend API base URL is not configured.");return window.TREDIN_CONFIG.apiBaseUrl||document.documentElement.dataset.apiBaseUrl;}
+};
+</script>
+</head>
+<body>
+<!-- Auth gate: production authentication. Password is the primary login factor; OTP is used only for verification/recovery when required by the backend. -->
+<div id="authGate" class="auth-gate" style="display:none" aria-live="polite">
+  <div class="auth-panel">
+    <div class="auth-logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 10 11 14 15 20 7"/><path d="M15 7h5v5"/></svg></div>
+    <div class="auth-brand">TredIN</div>
+    <p class="auth-tagline">Secure trading workspace</p>
+    <div class="auth-mode-pill" id="authModePill">SECURE LOGIN</div>
+    <div id="authStepLogin">
+      <div class="field"><label>Email or mobile</label><input id="authId" autocomplete="username" placeholder="Email or mobile"></div>
+      <div class="field"><label>Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="Enter password"></div>
+      <div id="authOtpWrap" class="field" style="display:none">
+        <label>OTP</label>
+        <input id="authOtp" inputmode="numeric" maxlength="6" placeholder="6-digit OTP">
+        <p class="kpi-note">OTP is used only when required for verification or recovery.</p>
+      </div>
+      <p id="authErr" class="auth-err" style="display:none"></p>
+      <button class="btn primary order-primary" style="width:100%;margin-top:8px" type="button" id="authSubmitBtn" onclick="authSubmit()">Sign in</button>
+      <p class="kpi-note" style="margin-top:12px;text-align:center">Use your registered email/mobile and password.</p>
+    </div>
+  </div>
+</div>
+<div class="app" id="workspaceApp">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 10 11 14 15 20 7"/><path d="M15 7h5v5"/></svg></span>TredIN</div>
+    <div class="search"><input id="globalSearch" placeholder="Search instrument, symbol…"></div>
+    <div class="top-right">
+      <button class="pill" onclick="openNotifications()"><span class="notif-3d"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><span id="notifCount">0</span></button>
+      <button class="pill" id="userPill" onclick="navigate('account')">Account</button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="side">
+      <div class="nav">
+        <div class="navgroup">Workspace</div>
+        <button data-route="home" onclick="navigate('home')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span> Home</button>
+        <button data-route="markets" onclick="navigate('markets')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/><path d="M2 19h20"/></svg></span> Markets</button>
+        <button data-route="trade" onclick="navigate('trade')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M10 5h9v9"/><path d="M5 12v7h7"/></svg></span> Trade</button>
+        <button data-route="orders" onclick="navigate('orders')"><span class="ti3d gold" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h13M7 10h13M7 16h13"/><path d="M3 4h.01M3 10h.01M3 16h.01"/></svg></span> Orders</button>
+        <button data-route="positions" onclick="navigate('positions')"><span class="ti3d purple" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18V9M12 18V5M19 18v-7"/><path d="M3 18h18"/></svg></span> Positions</button>
+        <button data-route="portfolio" onclick="navigate('portfolio')"><span class="ti3d green" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/></svg></span> Portfolio</button>
+        <button data-route="funds" onclick="navigate('funds')"><span class="ti3d gold" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h18v12H3z"/><path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M12 11v5M9.5 13.5h5"/></svg></span> Funds</button>
+        <div class="navgroup">Advanced</div>
+        <button data-route="options" onclick="navigate('options')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 12h14M5 19h14"/><path d="m9 3-2 4 2 4m6-1 2 4-2 4"/></svg></span> Options</button>
+        <button data-route="strategy" onclick="navigate('strategy')"><span class="ti3d purple" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="8" cy="19" r="2"/><path d="m8 7 8 4M16.5 13.5l-7 4"/></svg></span> Strategy Lab</button>
+        <button data-route="alerts" onclick="navigate('alerts')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span> GTT / Alerts</button>
+        <button data-route="reports" onclick="navigate('reports')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h5M9 16v-3m3 3V9m3 7v-5"/></svg></span> Reports</button>
+        <button data-route="risk" onclick="navigate('risk')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="m8 13 2.5 2.5L16 10"/></svg></span> Risk Cockpit</button>
+        <div class="navgroup">Account</div>
+        <button data-route="account" onclick="navigate('account')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span> Account</button>
+        <button data-route="profile" onclick="navigate('profile')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span> Profile</button>
+        <button data-route="kyc" onclick="navigate('kyc')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h5M9 13h6M9 17h5"/></svg></span> KYC</button>
+        <button data-route="signup" onclick="navigate('signup')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0M19 11v6M16 14h6"/></svg></span> Signup</button>
+        <button data-route="deposit" onclick="navigate('deposit')"><span class="ti3d green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M7 7V5h10v2M12 10v7M9 14l3 3 3-3"/></svg></span> Deposit</button>
+        <button data-route="withdraw" onclick="navigate('withdraw')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M7 7V5h10v2M12 17v-7M9 13l3-3 3 3"/></svg></span> Withdraw</button>
+        <button data-route="support" onclick="navigate('support')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><path d="M4 13h3v5H5a1 1 0 0 1-1-1zM20 13h-3v5h2a1 1 0 0 0 1-1z"/><path d="M12 21h4"/></svg></span> Support</button>
+      </div>
+    </aside>
+    <main class="main" id="app"></main>
+  </div>
+  <nav class="mobile-nav" aria-label="Main navigation">
+    <button data-route="home" onclick="navigate('home')" type="button">
+      <span class="mnav-ico"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span></span><span class="mnav-txt">Home</span>
+    </button>
+    <button data-route="markets" onclick="navigate('markets')" type="button">
+      <span class="mnav-ico"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/><path d="M2 19h20"/></svg></span></span><span class="mnav-txt">Markets</span>
+    </button>
+    <button data-route="trade" onclick="navigate('trade')" type="button" class="mnav-trade">
+      <span class="mnav-ico"><span class="ti3d gold" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M10 5h9v9"/><path d="M5 12v7h7"/></svg></span></span><span class="mnav-txt">Trade</span>
+    </button>
+    <button data-route="portfolio" onclick="navigate('portfolio')" type="button">
+      <span class="mnav-ico"><span class="ti3d green" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/></svg></span></span><span class="mnav-txt">Portfolio</span>
+    </button>
+    <button data-route="account" onclick="navigate('account')" type="button">
+      <span class="mnav-ico"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span></span><span class="mnav-txt">Account</span>
+    </button>
+  </nav>
+</div>
+<div class="modalbg" id="modalbg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* =========================================================
+   TredIN — Clean Professional Build
+   Secure session-gated workspace.
+   ========================================================= */
+
+const MASTER = {
+  segments: {
+    equity:   { name: "Equity",          exchanges: ["NSE","BSE"], product: ["CNC","MIS"], unit: "shares" },
+    futures:  { name: "Futures",         exchanges: ["NSE"],       product: ["NRML","MIS"], unit: "lots" },
+    options:  { name: "Options",         exchanges: ["NSE"],       product: ["NRML","MIS"], unit: "lots" },
+    commodity:{ name: "Commodity",       exchanges: ["MCX"],       product: ["NRML","MIS"], unit: "lots" },
+    forex:    { name: "Forex / Currency",exchanges: ["NSE"],       product: ["NRML","MIS"], unit: "lots" }
+  },
+  instruments: [
+    { id:"RELIANCE",     symbol:"RELIANCE",      name:"Reliance Industries",      exchange:"NSE", segment:"equity", price:null,  lotSize:1,   multiplier:1, tick:0.05 },
+    { id:"TCS",          symbol:"TCS",           name:"Tata Consultancy Services",exchange:"NSE", segment:"equity", price:null,  lotSize:1,   multiplier:1, tick:0.05 },
+    { id:"SBIN",         symbol:"SBIN",          name:"State Bank of India",      exchange:"NSE", segment:"equity", price:null,   lotSize:1,   multiplier:1, tick:0.05 },
+    { id:"NIFTYFUT",     symbol:"NIFTY",         name:"NIFTY Index Future",       exchange:"NSE", segment:"futures", price:null, lotSize:75,  multiplier:1, tick:0.05, expiry:"25-Sep-2026" },
+    { id:"BANKFUT",      symbol:"BANKNIFTY",     name:"BANKNIFTY Future",         exchange:"NSE", segment:"futures", price:null, lotSize:30,  multiplier:1, tick:0.05, expiry:"30-Sep-2026" },
+    { id:"NIFTY25000CE", symbol:"NIFTY 25000 CE",name:"NIFTY Call Option",        exchange:"NSE", segment:"options", price:null,   lotSize:75,  multiplier:1, tick:0.05, expiry:"25-Sep-2026", strike:25000, optionType:"CE" },
+    { id:"NIFTY25000PE", symbol:"NIFTY 25000 PE",name:"NIFTY Put Option",         exchange:"NSE", segment:"options", price:null,   lotSize:75,  multiplier:1, tick:0.05, expiry:"25-Sep-2026", strike:25000, optionType:"PE" },
+    { id:"GOLD",         symbol:"GOLD",          name:"Gold Futures",             exchange:"MCX", segment:"commodity", price:null, lotSize:100, multiplier:1, tick:1,    expiry:"05-Oct-2026" },
+    { id:"CRUDE",        symbol:"CRUDEOIL",      name:"Crude Oil Futures",        exchange:"MCX", segment:"commodity", price:null,  lotSize:100, multiplier:1, tick:1,    expiry:"17-Sep-2026" },
+    { id:"USDINR",       symbol:"USDINR",        name:"US Dollar / INR",          exchange:"NSE", segment:"forex", price:null, lotSize:1000,multiplier:1, tick:.0025,expiry:"29-Sep-2026" },
+    { id:"EURINR",       symbol:"EURINR",        name:"Euro / INR",               exchange:"NSE", segment:"forex", price:null,lotSize:1000,multiplier:1, tick:.0025,expiry:"29-Sep-2026" }
+  ]
+};
+
+const KEY = "tredin_clean_v1";
+const fresh = {
+  user: {},
+  marketQuotes: {},
+  funds: { available: 0, used: 0, blocked: 0, withdrawable: 0, marginLimit: null },
+  orders: [], executions: [], positions: [], holdings: [], watchlist: [], ledger: [], notifications: [], activity: [], fundRequests: [],
+  depositFlow: { step: 1, amount: "", method: "", confirmed: false },
+  withdrawFlow: { step: 1, amount: "", bank: "", confirmed: false },
+  kyc: { step: 1, status: "NOT_STARTED", personal: {}, pan: {}, bank: {}, ipv: {}, esign: {}, nominee: {}, docs: {} },
+  profile: {}
+};
+
+let state = load();
+function load() { return structuredClone(fresh); }
+function save() { /* Server-authoritative state: mutations are committed through API responses. */ }
+function icon3d(name,tone='blue'){return `<span class="ti3d ${tone}" aria-hidden="true">${iconSvg(name)}</span>`;}
+
+
+/* API CONTRACT: UI components must consume state only; API adapters can replace
+   the state/service layer later without changing routes, cards, or interaction markup. */
+
+/* ---------- Helpers ---------- */
+function instrument(id) { return MASTER.instruments.find(x => x.id === id); }
+function money(n) { return n == null || Number.isNaN(Number(n)) ? "—" : "₹" + Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function num(n, d = 2) { return n == null || Number.isNaN(Number(n)) ? "—" : Number(n).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function current(i) { return state.marketQuotes?.[i]?.price ?? null; }
+function grossPnL(p) {
+  const i = instrument(p.instrument);
+  const q = p.qty * (i?.lotSize || 1) * (i?.multiplier || 1);
+  const px = current(p.instrument);
+  return p.side === "BUY" ? (px - p.avg) * q : (p.avg - px) * q;
+}
+function slRisk(p) {
+  const i = instrument(p.instrument);
+  const q = p.qty * (i?.lotSize || 1) * (i?.multiplier || 1);
+  if (p.sl == null) return 0;
+  return p.side === "BUY" ? (p.avg - p.sl) * q : (p.sl - p.avg) * q;
+}
+function targetReward(p) {
+  const i = instrument(p.instrument);
+  const q = p.qty * (i?.lotSize || 1) * (i?.multiplier || 1);
+  if (p.target == null) return 0;
+  return p.side === "BUY" ? (p.target - p.avg) * q : (p.avg - p.target) * q;
+}
+function rr(p) { const r = slRisk(p); return r ? targetReward(p) / r : 0; }
+function charges(order) {
+  const value = order.qty * (instrument(order.instrument)?.lotSize || 1) * order.price;
+  return Math.max(20, value * 0.00025);
+}
+function toast(t) {
+  const e = document.getElementById("toast");
+  e.textContent = t;
+  e.style.display = "block";
+  clearTimeout(window.__toast);
+  window.__toast = setTimeout(() => e.style.display = "none", 2800);
+}
+/* Production interaction lock — prevents double submits before backend exists */
+window.__tredinBusy = false;
+function setBusy(on, msg) {
+  window.__tredinBusy = !!on;
+  if (on && msg) toast(msg);
+}
+function preApiBanner() {
+  return "";
+}
+function uiSafe() {
+  // Don't full-redraw while user is typing in a form or a modal is open
+  if (document.getElementById("modalbg")?.style.display === "flex") return false;
+  const a = document.activeElement;
+  if (a && (a.tagName === "INPUT" || a.tagName === "SELECT" || a.tagName === "TEXTAREA")) return false;
+  return true;
+}
+function notify(text) {
+  state.notifications.unshift({ id: Date.now(), text, read: false });
+  save();
+  render();
+}
+function openModal(html) {
+  document.getElementById("modal").innerHTML = html;
+  document.getElementById("modalbg").style.display = "flex";
+}
+function closeModal() { document.getElementById("modalbg").style.display = "none"; }
+document.getElementById("modalbg").addEventListener("click", e => {
+  if (e.target.id === "modalbg") closeModal();
+});
+
+/* ---------- STEP 6: Secure authentication + session boundary ---------- */
+const AUTH_KEY="tredin_session_v1", AUTH_MAX_AGE_MS=8*60*60*1000;
+function authMode(){return window.TREDIN_API?.mode||"live"}
+function getSession(){try{return JSON.parse(sessionStorage.getItem(AUTH_KEY)||"null")}catch{return null}}
+function setSession(v){sessionStorage.setItem(AUTH_KEY,JSON.stringify(v))}
+function clearSession(){sessionStorage.removeItem(AUTH_KEY)}
+function isLoggedIn(){const s=getSession();return !!(s?.token&&(!s.at||Date.now()-s.at<AUTH_MAX_AGE_MS))}
+function showAuthGate(show){const g=document.getElementById("authGate"),a=document.getElementById("workspaceApp");if(g)g.style.display=show?"flex":"none";if(a)a.style.display=show?"none":"";const p=document.getElementById("authModePill");if(p)p.textContent="SECURE LOGIN";const o=document.getElementById("authOtpWrap");if(o)o.style.display="none"}
+function authError(msg){const e=document.getElementById("authErr");if(!e)return;e.style.display=msg?"block":"none";e.textContent=msg||""}
+function authChallengeError(d){return d&&(d.requiresOtp||d.otpRequired||d.verificationRequired)?"Additional verification is required. The backend must provide the confirmed OTP verification contract before this step can be completed.":null}
+async function authSubmit(){const id=(document.getElementById("authId")?.value||"").trim(),pass=document.getElementById("authPass")?.value||"";authError("");if(!id||!pass)return authError("Enter your email/mobile and password.");const b=document.getElementById("authSubmitBtn");if(b){b.disabled=true;b.textContent="Signing in…"}try{const r=await window.TREDIN_API.auth.login({identifier:id,password:pass}),d=r?.data||{};if(!r?.ok)throw new Error(r?.message||"Unable to sign in.");const ch=authChallengeError(d);if(ch)throw new Error(ch);const token=d.accessToken||d.token;if(!token)throw new Error("Authentication response is missing a session token.");setSession({token,refreshToken:d.refreshToken||null,user:d.user||null,at:Date.now()});showAuthGate(false);location.hash="#/home";render()}catch(e){authError(apiErrorMessage(e,"Sign in failed. Please try again."))}finally{if(b){b.disabled=false;b.textContent="Sign in"}}}
+async function authLogout(){try{await window.TREDIN_API.auth.logout()}catch(e){}clearSession();showAuthGate(true);location.hash="#/login"}
+async function refreshAccessToken(){const s=getSession();if(!s?.refreshToken)return false;try{const r=await window.TREDIN_API.auth.refresh(),d=r?.data||{},token=d.accessToken||d.token;if(!token)return false;setSession({...s,token,refreshToken:d.refreshToken||s.refreshToken,at:Date.now(),user:d.user||s.user});return true}catch(e){clearSession();showAuthGate(true);return false}}
+/* ---------- Router ---------- */
+function navigate(route, params = {}) {
+  const q = new URLSearchParams();
+  if (params.id) q.set("id", params.id);
+  if (params.side) q.set("side", params.side);
+  const qs = q.toString();
+  window.location.hash = "#/" + route + (qs ? "?" + qs : "");
+}
+function parse() {
+  const s = location.hash.replace(/^#\//, "") || "home";
+  const [r, q] = s.split("?");
+  const p = new URLSearchParams(q || "");
+  return { route: r || "home", id: p.get("id"), side: p.get("side") };
+}
+window.addEventListener("hashchange", render);
+
+function head(title, sub, actions = "") {
+  return `<div class="page-head"><div><h1>${title}</h1><div class="sub">${sub || ""}</div></div><div class="row">${actions}</div></div>`;
+}
+function metric(label, value, note = "") {
+  return `<div class="card kpi-card"><div class="label">${label}</div><div class="metric">${value}</div>${note ? `<div class="kpi-note">${note}</div>` : ""}</div>`;
+}
+function detailRow(a, b) {
+  return `<tr><td class="muted">${a}</td><td><strong>${b}</strong></td></tr>`;
+}
+function cardInstrument(i) {
+  return `<div class="card instrument">
+    <div><h3>${i.symbol}</h3><div class="muted">${i.name} · ${i.exchange} · ${MASTER.segments[i.segment].name}</div></div>
+    <div style="text-align:right">
+      <div class="price">${num(i.price, i.price < 100 ? 4 : 2)}</div>
+      <div class="positive">${i.change == null ? "—" : "+"+num(i.change, 2)+"%"}</div>
+      <button class="btn ghost" onclick="navigate('instrumentHub',{id:'${i.id}'})">Open</button>
+    </div>
+  </div>`;
+}
+function chartSvg(){ return `<div class="chart-empty">Live chart will appear when market-feed data is connected.</div>`; }
+
+/* ---------- Pages ---------- */
+function home() {
+  const posP = state.positions.reduce((a, p) => a + grossPnL(p), 0);
+  const holdP = state.holdings.reduce((a, h) => a + (current(h.instrument) - h.avg) * h.qty, 0);
+  document.getElementById("app").innerHTML =
+    head("Dashboard", "TredIN workspace — production workspace",
+      `<button class="btn primary" onclick="navigate('trade')">New Order</button>
+       <button class="btn" onclick="navigate('funds')">Funds</button>`) +
+    preApiBanner() +
+    `<div class="grid g4">
+      ${metric("Available Margin", money(state.funds.available))}
+      ${metric("Used Margin", money(state.funds.used))}
+      ${metric("Position P&L", (posP >= 0 ? "+" : "") + money(posP))}
+      ${metric("Holdings P&L", (holdP >= 0 ? "+" : "") + money(holdP))}
+    </div>
+    <div class="section">
+      <h2>Quick Actions</h2>
+      <p class="kpi-note" style="margin:-4px 0 10px">Dashboard shortcuts — same destinations as menu / bottom nav</p>
+      <div class="action-grid">
+        <button class="action-3d trade" type="button" onclick="navigate('trade')" aria-label="Trade">
+          <span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><path d="M10 5h9v9"/><path d="M5 12v7h7"/></svg></span><span class="action-label">Trade</span>
+        </button>
+        <button class="action-3d orders" type="button" onclick="navigate('orders')" aria-label="Orders">
+          <span class="ti3d gold" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h13M7 10h13M7 16h13"/><path d="M3 4h.01M3 10h.01M3 16h.01"/></svg></span><span class="action-label">Orders</span>
+        </button>
+        <button class="action-3d positions" type="button" onclick="navigate('positions')" aria-label="Positions">
+          <span class="ti3d purple" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18V9M12 18V5M19 18v-7"/><path d="M3 18h18"/></svg></span><span class="action-label">Positions</span>
+        </button>
+        <button class="action-3d portfolio" type="button" onclick="navigate('portfolio')" aria-label="Portfolio">
+          <span class="ti3d green" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/></svg></span><span class="action-label">Portfolio</span>
+        </button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="page-head" style="margin-bottom:10px"><div><h2>Watchlist</h2></div>
+        <button class="btn" onclick="navigate('markets')">All Markets</button></div>
+      <div class="grid g3">${state.watchlist.slice(0, 6).map(x => cardInstrument(instrument(x))).join("")}</div>
+    </div>`;
+}
+
+function markets() {
+  document.getElementById("app").innerHTML =
+    head("Markets", "All supported segments",
+      `<button class="btn primary" onclick="navigate('trade')">Trade</button>`) +
+    `<div class="row" style="margin-bottom:12px">
+      <button class="btn" onclick="filterSegment('all')">All</button>
+      ${Object.entries(MASTER.segments).map(([k, v]) =>
+        `<button class="btn" onclick="filterSegment('${k}')">${v.name}</button>`).join("")}
+    </div>
+    <div id="marketGrid" class="grid g2">${MASTER.instruments.map(cardInstrument).join("")}</div>`;
+}
+function filterSegment(k) {
+  const el = document.getElementById("marketGrid");
+  if (!el) return;
+  el.innerHTML = MASTER.instruments
+    .filter(i => k === "all" || i.segment === k)
+    .map(cardInstrument).join("");
+}
+
+function instrumentHub(id) {
+  const i = instrument(id) || MASTER.instruments[0];
+  document.getElementById("app").innerHTML =
+    head(i.symbol, `${i.name} · ${i.exchange} · ${MASTER.segments[i.segment].name}`,
+      `<button class="btn trade-action trade-buy" onclick="navigate('trade',{id:'${i.id}',side:'BUY'})"><span class="btn-icon">${iconSvg('buy')}</span><span>Buy</span></button>
+       <button class="btn trade-action trade-sell" onclick="navigate('trade',{id:'${i.id}',side:'SELL'})"><span class="btn-icon">${iconSvg('sell')}</span><span>Sell</span></button>
+       <button class="btn" onclick="toggleWatch('${i.id}')">${state.watchlist.includes(i.id) ? "★ In Watchlist" : "☆ Add"}</button>`) +
+    `<div class="grid g2">
+      <div class="card">
+        <div class="instrument">
+          <div><div class="label">Last Traded Price</div><div class="metric">${num(i.price, i.price < 100 ? 4 : 2)}</div></div>
+          <span class="tag good">SERVER DATA</span>
+        </div>
+        <div class="section"><div class="chart">${chartSvg(i.price)}</div></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn">1D</button><button class="btn">5m</button>
+          <button class="btn">15m</button><button class="btn">1h</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Contract Details</h2>
+        <div class="tablewrap"><table class="table"><tbody>
+          ${detailRow("Exchange", i.exchange)}
+          ${detailRow("Segment", MASTER.segments[i.segment].name)}
+          ${detailRow("Lot Size", i.lotSize)}
+          ${detailRow("Multiplier", i.multiplier)}
+          ${detailRow("Tick Size", i.tick)}
+          ${detailRow("Expiry", i.expiry || "—")}
+          ${detailRow("Strike", i.strike ?? "—")}
+          ${detailRow("Option Type", i.optionType || "—")}
+        </tbody></table></div>
+        <div class="section row">
+          <button class="btn trade-action trade-buy" onclick="navigate('trade',{id:'${i.id}',side:'BUY'})"><span class="btn-icon">${iconSvg('buy')}</span><span>Buy</span></button>
+          <button class="btn trade-action trade-sell" onclick="navigate('trade',{id:'${i.id}',side:'SELL'})"><span class="btn-icon">${iconSvg('sell')}</span><span>Sell</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="section grid g2">
+      <div class="card"><h2>Market Depth</h2>${depth(i)}</div>
+      <div class="card"><h2>Position</h2>${positionFor(i.id)}</div>
+    </div>`;
+}
+function depth(i) {
+  return `<div class="tablewrap"><table class="table">
+    <thead><tr><th>Bid Qty</th><th>Bid</th><th>Ask</th><th>Ask Qty</th></tr></thead>
+    <tbody>${[1,2,3,4,5].map(n =>
+      `<tr><td>${n * 20}</td><td>${num(i.price - i.tick * n, i.price < 100 ? 4 : 2)}</td>
+       <td>${num(i.price + i.tick * n, i.price < 100 ? 4 : 2)}</td><td>${n * 18}</td></tr>`
+    ).join("")}</tbody></table></div>`;
+}
+function positionFor(id) {
+  const p = state.positions.find(x => x.instrument === id);
+  if (!p) return `<div class="empty">No open position.</div>`;
+  return `<div class="instrument">
+    <div><strong>${p.side} ${p.qty} ${MASTER.segments[instrument(id).segment].unit}</strong>
+      <div class="muted">Avg ${num(p.avg, 2)}</div></div>
+    <div class="${grossPnL(p) >= 0 ? "positive" : "negative"}">${grossPnL(p) >= 0 ? "+" : ""}${money(grossPnL(p))}</div>
+  </div>
+  <button class="btn" style="margin-top:10px" onclick="positionDetail('${p.id}')">Manage</button>`;
+}
+
+/* ---------- Trade Ticket ---------- */
+window.ticketSide = "BUY";
+function trade(id) {
+  const i = instrument(id) || instrument("RELIANCE");
+  document.getElementById("app").innerHTML =
+    head("Order Ticket", "Place and manage orders",
+      `<button class="btn order-secondary" onclick="navigate('orders')"><span class="btn-icon">${iconSvg('order')}</span><span>Orders</span></button>`) +
+    `<div class="grid g2">
+      <div class="card">
+        <div class="order-tabs">
+          <button id="buyTab" class="btn trade-action trade-buy" onclick="setSide('BUY')"><span class="btn-icon">${iconSvg('buy')}</span><span>BUY</span></button>
+          <button id="sellTab" class="btn trade-action trade-sell" onclick="setSide('SELL')"><span class="btn-icon">${iconSvg('sell')}</span><span>SELL</span></button>
+        </div>
+        <div class="formgrid">
+          <div class="field" style="grid-column:1/-1">
+            <label>Instrument</label>
+            <select id="oInstrument" onchange="refreshTicket()">
+              ${MASTER.instruments.map(x =>
+                `<option value="${x.id}" ${x.id === i.id ? "selected" : ""}>${x.symbol} · ${x.exchange} · ${MASTER.segments[x.segment].name}</option>`
+              ).join("")}
+            </select>
+          </div>
+          <div class="field"><label>Exchange</label><input id="oExchange" readonly></div>
+          <div class="field"><label>Segment</label><input id="oSegment" readonly></div>
+          <div class="field"><label>Product</label><select id="oProduct"></select></div>
+          <div class="field"><label>Order Type</label>
+            <select id="oType"><option>Market</option><option>Limit</option><option>SL</option><option>SL-M</option></select>
+          </div>
+          <div class="field"><label>Quantity / Lots</label><input id="oQty" type="number" min="1" value="1"></div>
+          <div class="field"><label>Price</label><input id="oPrice" type="number" step="any"></div>
+          <div class="field"><label>Trigger Price</label><input id="oTrigger" type="number" step="any" placeholder="Optional"></div>
+          <div class="field"><label>Validity</label><select><option>DAY</option><option>IOC</option></select></div>
+          <div class="field"><label>Stop Loss</label><input id="oSL" type="number" step="any" placeholder="Optional"></div>
+          <div class="field"><label>Target</label><input id="oTarget" type="number" step="any" placeholder="Optional"></div>
+        </div>
+        <div class="section">
+          <div class="checks">
+            <div class="check"><span class="label">Lot Size</span><br><strong id="lotInfo"></strong></div>
+            <div class="check"><span class="label">Est. Margin</span><br><strong id="marginInfo"></strong></div>
+            <div class="check"><span class="label">Est. Charges</span><br><strong id="chargeInfo"></strong></div>
+          </div>
+        </div>
+        <div class="section row">
+          <button class="btn primary order-primary" onclick="previewOrder()"><span class="btn-icon">${iconSvg('eye')}</span><span>Review Order</span></button>
+          <button class="btn order-secondary" onclick="navigate('home')"><span class="btn-icon">${iconSvg('x')}</span><span>Cancel</span></button>
+        </div>
+        <div class="execution-hint"><span class="execution-dot"></span><span>Server-side execution lifecycle</span><span class="api-boundary" title="Backend transport is not connected">API READY · LIVE</span></div>
+      </div>
+      <div class="card">
+        <h2>Trading Rules</h2>
+        <p class="muted">Lot size, multiplier, tick and expiry come from master data.</p>
+        <div id="ticketRules"></div>
+        <div class="section">
+          <h2>Execution Flow</h2>
+          <p class="muted">Review → Confirm → RMS → Routing → Exchange Ack → Fill. Position updates only after execution.</p>
+        </div>
+      </div>
+    </div>`;
+  const initialSide = (parse().side === "SELL") ? "SELL" : "BUY";
+  window.ticketSide = initialSide;
+  document.getElementById("buyTab").className = initialSide === "BUY" ? "btn trade-action trade-buy" : "btn trade-action";
+  document.getElementById("sellTab").className = initialSide === "SELL" ? "btn trade-action trade-sell" : "btn trade-action";
+  refreshTicket();
+}
+function setSide(s) {
+  window.ticketSide = s;
+  const buy = document.getElementById("buyTab");
+  const sell = document.getElementById("sellTab");
+  if (buy) buy.className = s === "BUY" ? "btn trade-action trade-buy" : "btn trade-action";
+  if (sell) sell.className = s === "SELL" ? "btn trade-action trade-sell" : "btn trade-action";
+  refreshTicket();
+}
+function refreshTicket() {
+  const el = document.getElementById("oInstrument");
+  if (!el) return;
+  const i = instrument(el.value);
+  if (!i) return;
+  const seg = MASTER.segments[i.segment];
+  document.getElementById("oExchange").value = i.exchange;
+  document.getElementById("oSegment").value = seg.name;
+  document.getElementById("oPrice").value = i.price;
+  document.getElementById("oProduct").innerHTML = seg.product.map(x => `<option>${x}</option>`).join("");
+  document.getElementById("lotInfo").textContent = i.lotSize + " / " + seg.unit;
+  const q = Number(document.getElementById("oQty").value || 0);
+  const val = q * i.lotSize * i.multiplier * i.price;
+  document.getElementById("marginInfo").textContent = money(val * (i.segment === "equity" ? 0.25 : 0.18));
+  document.getElementById("chargeInfo").textContent = money(Math.max(20, val * 0.00025));
+  document.getElementById("ticketRules").innerHTML =
+    `<div class="tablewrap"><table class="table"><tbody>
+      ${detailRow("Contract", i.symbol)}
+      ${detailRow("Lot Size", i.lotSize)}
+      ${detailRow("Tick", i.tick)}
+      ${detailRow("Expiry", i.expiry || "N/A")}
+      ${detailRow("Direction", window.ticketSide)}
+    </tbody></table></div>`;
+}
+function previewOrder() {
+  const i = instrument(document.getElementById("oInstrument").value);
+  const q = Number(document.getElementById("oQty").value);
+  const price = Number(document.getElementById("oPrice").value);
+  const sl = Number(document.getElementById("oSL").value) || null;
+  const target = Number(document.getElementById("oTarget").value) || null;
+  if (!q || q < 1) return toast("Enter a valid quantity.");
+  if (i.segment !== "equity" && q !== Math.floor(q)) return toast("Quantity must be whole lots.");
+  if (price <= 0) return toast("Enter a valid price.");
+  const order = {
+    instrument: i.id, side: window.ticketSide || "BUY", qty: q, price,
+    type: document.getElementById("oType").value,
+    product: document.getElementById("oProduct").value, sl, target
+  };
+  if (sl !== null && ((order.side === "BUY" && sl >= price) || (order.side === "SELL" && sl <= price)))
+    return toast("Stop Loss direction is invalid.");
+  if (target !== null && ((order.side === "BUY" && target <= price) || (order.side === "SELL" && target >= price)))
+    return toast("Target direction is invalid.");
+  const mult = i.lotSize * i.multiplier;
+  const risk = sl !== null ? (order.side === "BUY" ? (price - sl) : (sl - price)) * q * mult : 0;
+  const reward = target !== null ? (order.side === "BUY" ? (target - price) : (price - target)) * q * mult : 0;
+  openModal(`<div class="modalhead"><h2>Order Preview</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p><span class="tag">${order.side}</span> <strong>${i.symbol}</strong> · ${i.exchange} · ${MASTER.segments[i.segment].name}</p>
+    ${lifecycleRail("CREATED")}
+    <div class="tablewrap"><table class="table"><tbody>
+      ${detailRow("Product", order.product)}
+      ${detailRow("Order Type", order.type)}
+      ${detailRow("Quantity", q + " " + MASTER.segments[i.segment].unit)}
+      ${detailRow("Price", money(price))}
+      ${detailRow("Est. Charges", money(charges(order)))}
+      ${detailRow("SL Risk", risk ? money(risk) : "Not set")}
+      ${detailRow("Target Reward", reward ? money(reward) : "Not set")}
+      ${detailRow("Risk / Reward", risk ? num(reward / risk, 2) : "—")}
+    </tbody></table></div>
+    <div class="section row">
+      <button class="btn primary order-primary" onclick='confirmOrder(${JSON.stringify(order)})'><span class="btn-icon">${iconSvg('check')}</span><span>Confirm Order</span></button>
+      <button class="btn order-secondary" onclick="closeModal()"><span class="btn-icon">${iconSvg('edit')}</span><span>Edit Order</span></button>
+    </div>`);
+}
+function confirmOrder(o) {
+  if (current(o.instrument) == null) return toast("Live market price is unavailable. Order submission is blocked until market data is connected.");
+  if (window.__tredinBusy) return toast("Please wait — order request is already in progress.");
+  if (!window.TREDIN_API?.orders?.create) return toast("Order API is not configured.");
+  window.__tredinBusy = true; closeModal();
+  const idempotencyKey = "ID-" + Date.now();
+  tredinApiCall(() => window.TREDIN_API.orders.create({ ...o, idempotencyKey }), "Submitting order…")
+    .then(r => {
+      if (r?.data) state.orders = Array.isArray(r.data) ? r.data : (r.data.orders || state.orders);
+      toast("Order submitted to server."); render();
+    })
+    .catch(e => toast(e.message || "Order submission failed."))
+    .finally(() => { window.__tredinBusy = false; });
+}
+function tredinApiCall(fn, loadingText){
+  if (loadingText) toast(loadingText);
+  return Promise.resolve().then(fn);
+}
+function advanceOrder(){ /* Server owns order lifecycle; UI only renders API/WebSocket state. */ }
+function simulateFill(){ /* Removed: no client-side fills. */ }
+function fillOrder(){ /* Removed: execution arrives from backend/event stream. */ }
+function applyTrade(){ /* Removed: positions are server-authoritative. */ }
+
+/* ---------- Order lifecycle UI ---------- */
+const ORDER_STAGES = ["CREATED","VALIDATING","RMS_CHECK","ACCEPTED","ROUTING","EXCHANGE_ACK","OPEN","FILLED"];
+function lifecycleRail(status){
+  const failed = status === "REJECTED";
+  const idx = ORDER_STAGES.indexOf(status);
+  return `<div class="lifecycle-rail" aria-label="Order execution lifecycle">${ORDER_STAGES.map((stage,i)=>{
+    const cls = failed ? (i <= Math.max(0, idx) ? "done" : "") : (i < idx ? "done" : i === idx ? "current" : "");
+    return `<div class="lifecycle-step ${cls}">${stage.replace("_"," ")}</div>`;
+  }).join("")}</div>`;
+}
+function lifecycleMessage(status){
+  const map={CREATED:"Order submitted to the backend; validation is starting.",VALIDATING:"Checking order fields and master-data rules.",RMS_CHECK:"Risk and margin checks are in progress.",ACCEPTED:"Backend RMS accepted the order; routing is next.",ROUTING:"Order is being prepared for exchange routing.",EXCHANGE_ACK:"Exchange acknowledgement received in server flow.",OPEN:"Order is open and awaiting execution.",FILLED:"Execution completed and position state updated.",REJECTED:"Order was rejected before execution."};
+  return map[status] || "Order lifecycle state is being processed.";
+}
+
+/* ---------- Orders ---------- */
+function orders() {
+  document.getElementById("app").innerHTML =
+    head("Orders", "Order lifecycle and executions",
+      `<button class="btn primary" onclick="navigate('trade')">New Order</button>`) +
+    `<div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Order ID</th><th>Instrument</th><th>Side</th><th>Qty</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>${state.orders.length
+        ? state.orders.map(o =>
+            `<tr>
+              <td>${o.id}</td><td><strong>${o.instrument}</strong></td><td>${o.side}</td>
+              <td>${o.qty}</td><td>${money(o.price)}</td>
+              <td><span class="tag ${o.status === "FILLED" ? "good" : o.status === "REJECTED" ? "bad" : "warn"}">${o.status}</span></td>
+              <td><button class="btn" onclick="orderDetail('${o.id}')">Details</button></td>
+            </tr>`).join("")
+        : `<tr><td colspan="7" class="empty">No orders yet.</td></tr>`}
+      </tbody></table></div></div>
+    <div class="section card">
+      <h2>Executions</h2>
+      <div class="tablewrap"><table class="table">
+        <thead><tr><th>Execution</th><th>Order</th><th>Instrument</th><th>Side</th><th>Qty</th><th>Price</th></tr></thead>
+        <tbody>${state.executions.map(x =>
+          `<tr><td>${x.id}</td><td>${x.orderId}</td><td>${x.instrument}</td><td>${x.side}</td><td>${x.qty}</td><td>${money(x.price)}</td></tr>`
+        ).join("") || `<tr><td colspan="6" class="empty">No executions.</td></tr>`}</tbody>
+      </table></div>
+    </div>`;
+}
+function orderDetail(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  openModal(`<div class="modalhead"><h2>Order Detail</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p><strong>${o.id}</strong></p>
+    <div class="tablewrap"><table class="table"><tbody>
+      ${detailRow("Instrument", o.instrument)}
+      ${detailRow("Status", o.status)}
+      ${detailRow("Direction", o.side)}
+      ${detailRow("Quantity", o.qty)}
+      ${detailRow("Price", money(o.price))}
+      ${detailRow("Idempotency", o.idempotency || "—")}
+      ${detailRow("Reject Code", o.rejectCode || "—")}
+    </tbody></table></div>
+    <h3 style="margin-top:14px">Execution Lifecycle</h3>
+    ${lifecycleRail(o.status)}
+    <div class="status-panel"><strong>${o.status === "REJECTED" ? "Execution stopped" : "Current state: " + o.status.replace("_"," ")}</strong><div class="muted">${lifecycleMessage(o.status)}</div></div>`);
+}
+
+/* ---------- Positions ---------- */
+function positions() {
+  const total = state.positions.reduce((a, p) => a + grossPnL(p), 0);
+  document.getElementById("app").innerHTML =
+    head("Positions", "Open positions & protection",
+      `<button class="btn danger" onclick="squareOffAll()">Square-Off All</button>`) +
+    metric("Total Unrealized P&L", (total >= 0 ? "+" : "") + money(total), "Frontend mark-to-market") +
+    `<div class="section grid g2">${state.positions.map(p => positionCard(p)).join("") ||
+      `<div class="card empty">No open positions.</div>`}</div>`;
+}
+function positionCard(p) {
+  const i = instrument(p.instrument);
+  const g = grossPnL(p);
+  const risk = slRisk(p);
+  const reward = targetReward(p);
+  return `<div class="card">
+    <div class="instrument">
+      <div><h3>${i.symbol}</h3><div class="muted">${p.side} · ${MASTER.segments[i.segment].name} · ${i.exchange}</div></div>
+      <div class="${g >= 0 ? "positive" : "negative"}">${g >= 0 ? "+" : ""}${money(g)}</div>
+    </div>
+    <div class="tablewrap section"><table class="table"><tbody>
+      ${detailRow("Quantity", p.qty + " " + MASTER.segments[i.segment].unit)}
+      ${detailRow("Average", money(p.avg))}
+      ${detailRow("Mark", money(current(p.instrument)))}
+      ${detailRow("SL Risk", p.sl ? money(risk) : "—")}
+      ${detailRow("Target Reward", p.target ? money(reward) : "—")}
+      ${detailRow("Risk / Reward", p.sl && p.target ? num(rr(p), 2) : "—")}
+      ${detailRow("Expiry", i.expiry || "—")}
+    </tbody></table></div>
+    <div class="row">
+      <button class="btn primary" onclick="exitPosition('${p.id}')">Exit</button>
+      <button class="btn" onclick="positionDetail('${p.id}')">Manage</button>
+      <button class="btn" onclick="setProtection('${p.id}')">SL / Target</button>
+      <button class="btn" onclick="navigate('instrumentHub',{id:'${i.id}'})">Chart</button>
+    </div>
+  </div>`;
+}
+function positionDetail(id) {
+  const p = state.positions.find(x => x.id === id);
+  if (!p) return;
+  openModal(`<div class="modalhead"><h2>${instrument(p.instrument).symbol} Position</h2>
+    <button class="close" onclick="closeModal()">×</button></div>${positionCard(p)}`);
+}
+function exitPosition(id) {
+  const p = state.positions.find(x => x.id === id);
+  if (!p) return;
+  const i = instrument(p.instrument);
+  closeModal();
+  navigate("trade", { id: i.id });
+  setTimeout(() => {
+    window.ticketSide = p.side === "BUY" ? "SELL" : "BUY";
+    setSide(window.ticketSide);
+    document.getElementById("oQty").value = p.qty;
+    document.getElementById("oPrice").value = current(i.id);
+  }, 60);
+}
+function squareOffAll() {
+  if (!state.positions.length) return toast("No open positions.");
+  openModal(`<div class="modalhead"><h2>Square-Off All</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p>This creates exit orders for all open positions. Positions close only after execution.</p>
+    <div class="section">
+      <button class="btn danger" onclick="executeSquareOff()">Confirm Square-Off</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+    </div>`);
+}
+function executeSquareOff() {
+  const ps = [...state.positions];
+  closeModal();
+  ps.forEach((p, n) => setTimeout(() => {
+    const i = instrument(p.instrument);
+    confirmOrder({
+      instrument: i.id, side: p.side === "BUY" ? "SELL" : "BUY",
+      qty: p.qty, price: current(i.id), type: "Market",
+      product: MASTER.segments[i.segment].product[0], sl: null, target: null
+    });
+  }, n * 280));
+  notify("Square-Off All initiated. Exit orders processing.");
+}
+function setProtection(id) {
+  const p = state.positions.find(x => x.id === id);
+  const i = instrument(p.instrument);
+  openModal(`<div class="modalhead"><h2>SL / Target</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p>${i.symbol} · ${p.side} · Avg ${money(p.avg)}</p>
+    <div class="formgrid">
+      <div class="field"><label>Stop Loss</label><input id="psl" type="number" step="any" value="${p.sl ?? ""}"></div>
+      <div class="field"><label>Target</label><input id="ptarget" type="number" step="any" value="${p.target ?? ""}"></div>
+    </div>
+    <div class="section"><button class="btn primary" onclick="saveProtection('${id}')">Review & Save</button></div>`);
+}
+function saveProtection(id) {
+  const p = state.positions.find(x => x.id === id);
+  const sl = Number(document.getElementById("psl").value) || null;
+  const target = Number(document.getElementById("ptarget").value) || null;
+  if (sl !== null && ((p.side === "BUY" && sl >= p.avg) || (p.side === "SELL" && sl <= p.avg)))
+    return toast("Invalid Stop Loss direction.");
+  if (target !== null && ((p.side === "BUY" && target <= p.avg) || (p.side === "SELL" && target >= p.avg)))
+    return toast("Invalid Target direction.");
+  const r = sl ? Math.abs(p.avg - sl) * p.qty * (instrument(p.instrument).lotSize || 1) : 0;
+  const rew = target ? Math.abs(target - p.avg) * p.qty * (instrument(p.instrument).lotSize || 1) : 0;
+  openModal(`<div class="modalhead"><h2>Protection Preview</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p>SL Risk: <strong>${money(r)}</strong><br>
+       Target Reward: <strong>${money(rew)}</strong><br>
+       Risk/Reward: <strong>${r ? num(rew / r, 2) : "—"}</strong></p>
+    <button class="btn primary" onclick='applyProtection(${JSON.stringify(id)},${JSON.stringify(sl)},${JSON.stringify(target)})'>Confirm</button>`);
+}
+function applyProtection(id, sl, target) {
+  const p = state.positions.find(x => x.id === id);
+  if (!p) return;
+  p.sl = sl;
+  p.target = target;
+  state.activity.unshift({ time: Date.now(), event: "POSITION_PROTECTION_CHANGED", positionId: id });
+  save();
+  closeModal();
+  render();
+  toast("SL / Target updated.");
+}
+
+/* ---------- Portfolio ---------- */
+function portfolio() {
+  const pos = state.positions.reduce((a, p) => a + grossPnL(p), 0);
+  const hold = state.holdings.reduce((a, h) => a + (current(h.instrument) - h.avg) * h.qty, 0);
+  const value = state.holdings.reduce((a, h) => a + current(h.instrument) * h.qty, 0);
+  document.getElementById("app").innerHTML =
+    head("Portfolio", "Holdings + positions",
+      `<button class="btn" onclick="navigate('risk')">Risk Cockpit</button>`) +
+    `<div class="grid g4">
+      ${metric("Holdings Value", money(value))}
+      ${metric("Positions P&L", (pos >= 0 ? "+" : "") + money(pos))}
+      ${metric("Holdings P&L", (hold >= 0 ? "+" : "") + money(hold))}
+      ${metric("Total P&L", (pos + hold >= 0 ? "+" : "") + money(pos + hold))}
+    </div>
+    <div class="section card">
+      <h2>Holdings</h2>
+      <div class="tablewrap"><table class="table">
+        <thead><tr><th>Instrument</th><th>Qty</th><th>Avg</th><th>Mark</th><th>P&L</th></tr></thead>
+        <tbody>${state.holdings.map(h => {
+          const pnl = (current(h.instrument) - h.avg) * h.qty;
+          return `<tr>
+            <td>${h.instrument}</td><td>${h.qty}</td><td>${money(h.avg)}</td>
+            <td>${money(current(h.instrument))}</td>
+            <td class="${pnl >= 0 ? "positive" : "negative"}">${money(pnl)}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table></div>
+    </div>`;
+}
+
+/* ---------- Funds (hub) ---------- */
+function funds() {
+  document.getElementById("app").innerHTML =
+    head("Funds", "Pay-in, withdrawal, margin & ledger",
+      `<button class="btn primary" onclick="navigate('deposit')">Deposit</button>
+       <button class="btn" onclick="navigate('withdraw')">Withdraw</button>`) +
+    preApiBanner() +
+    `<div class="grid g4">
+      ${metric("Available", money(state.funds.available))}
+      ${metric("Used", money(state.funds.used))}
+      ${metric("Blocked", money(state.funds.blocked))}
+      ${metric("Withdrawable", money(state.funds.withdrawable))}
+    </div>
+    <div class="section grid g2">
+      <div class="card">
+        <h2>Quick Actions</h2>
+        <div class="row">
+          <button class="btn primary" onclick="navigate('deposit')"><span class="ti3d green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M7 7V5h10v2M12 10v7M9 14l3 3 3-3"/></svg></span> Deposit Funds</button>
+          <button class="btn" onclick="navigate('withdraw')"><span class="ti3d blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M7 7V5h10v2M12 17v-7M9 13l3-3 3 3"/></svg></span> Withdraw</button>
+        </div>
+        <p class="kpi-note" style="margin-top:10px">Multi-step deposit & withdrawal flows with review and status.</p>
+      </div>
+      <div class="card">
+        <h2>Recent Requests</h2>
+        <div class="tablewrap"><table class="table">
+          <thead><tr><th>Ref</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>${(state.fundRequests || []).slice(0, 5).map(r =>
+            `<tr><td>${r.id}</td><td>${r.type}</td><td>${money(r.amount)}</td>
+             <td><span class="tag ${r.status === 'SUCCESS' || r.status === 'CREDITED' ? 'good' : 'warn'}">${r.status}</span></td></tr>`
+          ).join("") || `<tr><td colspan="4" class="empty">No requests yet.</td></tr>`}</tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="section card">
+      <h2>Ledger</h2>
+      <div class="tablewrap"><table class="table">
+        <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>Note</th></tr></thead>
+        <tbody>${state.ledger.map(x =>
+          `<tr><td>${x.time}</td><td>${x.type}</td>
+           <td class="${x.amount >= 0 ? "positive" : "negative"}">${money(x.amount)}</td>
+           <td>${x.note}</td></tr>`
+        ).join("")}</tbody>
+      </table></div>
+    </div>
+    <p class="kpi-note">Deposit/withdrawal status is confirmed by the backend.</p>`;
+}
+
+/* ---------- Deposit workflow (4 steps) ---------- */
+const depositFlow = () => state.depositFlow || { step: 1, amount: "", method: "", confirmed: false };
+function saveDepositFlow(d) { state.depositFlow = d; save(); }
+function deposit() {
+  const d = depositFlow();
+  const s = Math.max(1, Math.min(4, d.step || 1));
+  const labels = ["Amount", "Method", "Review", "Status"];
+  let body = `<div class="stepper-mini">${labels.map((l, i) =>
+    `<span class="step-pill ${i + 1 === s ? "current" : ""} ${i + 1 < s ? "done" : ""}">${i + 1}. ${l}</span>`
+  ).join("")}</div>`;
+
+  if (s === 1) {
+    body += `<div class="card">
+      <h2>1. Deposit Amount</h2>
+      <p class="muted">Enter the amount you want to add to your trading account.</p>
+      <div class="field"><label>Amount (₹)</label>
+        <input id="depAmt" type="number" min="1" step="0.01" value="${d.amount || ""}" placeholder="e.g. 10000">
+      </div>
+      <div class="section row">
+        <button class="btn primary" onclick="depNext(1)">Continue</button>
+        <button class="btn" onclick="navigate('funds')">Back to Funds</button>
+      </div>
+    </div>`;
+  }
+  if (s === 2) {
+    body += `<div class="card">
+      <h2>2. Select Payment Method</h2>
+      <p class="muted">Amount: <strong>${money(d.amount)}</strong></p>
+      <div class="field"><label>Payment Method</label>
+        <select id="depMethod">
+          <option value="">Select method</option>
+          <option ${d.method === "UPI" ? "selected" : ""}>UPI</option>
+          <option ${d.method === "Net Banking" ? "selected" : ""}>Net Banking</option>
+          <option ${d.method === "Bank Transfer" ? "selected" : ""}>Bank Transfer</option>
+          <option ${d.method === "Payment Gateway" ? "selected" : ""}>Payment Gateway</option>
+        </select>
+      </div>
+      <div class="section row">
+        <button class="btn" onclick="depBack(2)">Back</button>
+        <button class="btn primary" onclick="depNext(2)">Continue</button>
+      </div>
+    </div>`;
+  }
+  if (s === 3) {
+    body += `<div class="card">
+      <h2>3. Review Deposit</h2>
+      <div class="tablewrap"><table class="table"><tbody>
+        ${detailRow("Amount", money(d.amount))}
+        ${detailRow("Method", d.method || "—")}
+        ${detailRow("Account", state.user.account)}
+      </tbody></table></div>
+      <div class="section">
+        <label class="checkline"><input id="depConfirm" type="checkbox"> I confirm the amount and payment method are correct.</label>
+      </div>
+      <div class="section row">
+        <button class="btn" onclick="depBack(3)">Back</button>
+        <button class="btn primary" onclick="depNext(3)">Confirm Deposit</button>
+      </div>
+    </div>`;
+  }
+  if (s === 4) {
+    body += `<div class="card">
+      <h2>4. Deposit Status</h2>
+      <span class="tag good">REQUEST RECORDED</span>
+      <p style="margin-top:12px">Amount: <strong>${money(d.amount)}</strong></p>
+      <p>Method: <strong>${d.method || "—"}</strong></p>
+      <p class="muted">Final credit is subject to payment/bank reconciliation. Balance changes only after server confirmation.</p>
+      <div class="section row">
+        <button class="btn primary" onclick="navigate('funds')">Open Funds</button>
+        <button class="btn" onclick="depReset()">New Deposit</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById("app").innerHTML =
+    head("Deposit Funds", "Amount → Method → Review → Status") + body;
+}
+function depNext(step) {
+  const d = depositFlow();
+  if (step === 1) {
+    const a = Number(document.getElementById("depAmt")?.value || 0);
+    if (a < 1) return toast("Enter a valid deposit amount.");
+    d.amount = a; d.step = 2;
+  } else if (step === 2) {
+    const m = document.getElementById("depMethod")?.value || "";
+    if (!m) return toast("Select a payment method.");
+    d.method = m; d.step = 3;
+  } else if (step === 3) {
+    if (!document.getElementById("depConfirm")?.checked) return toast("Confirm the deposit details.");
+    d.confirmed = true; d.step = 4;
+    if (!window.TREDIN_API?.funds?.deposit) return toast("Deposit API is not configured.");
+    return tredinApiCall(() => window.TREDIN_API.funds.deposit({ amount:Number(d.amount), method:d.method, idempotencyKey:(crypto?.randomUUID?.()||String(Date.now())) }), "Submitting deposit request…")
+      .then(r => { d.step = 4; d.confirmed = true; state.depositFlow = d; if (r?.data?.funds) state.funds = r.data.funds; if (r?.data?.requests) state.fundRequests = r.data.requests; toast("Deposit request submitted."); deposit(); })
+      .catch(e => toast(e.message || "Deposit request failed."));
+  }
+  saveDepositFlow(d);
+  deposit();
+}
+function depBack(step) {
+  const d = depositFlow();
+  d.step = Math.max(1, step - 1);
+  saveDepositFlow(d);
+  deposit();
+}
+function depReset() {
+  state.depositFlow = { step: 1, amount: "", method: "", confirmed: false };
+  save();
+  deposit();
+}
+
+/* ---------- Withdrawal workflow (4 steps) ---------- */
+const withdrawFlow = () => state.withdrawFlow || { step: 1, amount: "", bank: "", confirmed: false };
+function saveWithdrawFlow(w) { state.withdrawFlow = w; save(); }
+function withdrawPage() {
+  const w = withdrawFlow();
+  const s = Math.max(1, Math.min(4, w.step || 1));
+  const labels = ["Amount", "Bank", "Review", "Status"];
+  let body = `<div class="stepper-mini">${labels.map((l, i) =>
+    `<span class="step-pill ${i + 1 === s ? "current" : ""} ${i + 1 < s ? "done" : ""}">${i + 1}. ${l}</span>`
+  ).join("")}</div>`;
+
+  if (s === 1) {
+    body += `<div class="card">
+      <h2>1. Withdrawal Amount</h2>
+      <p class="muted">Withdrawable balance: <strong>${money(state.funds.withdrawable)}</strong></p>
+      <div class="field"><label>Amount (₹)</label>
+        <input id="wdAmt" type="number" min="1" step="0.01" value="${w.amount || ""}" placeholder="e.g. 5000">
+      </div>
+      <div class="section row">
+        <button class="btn primary" onclick="wdNext(1)">Continue</button>
+        <button class="btn" onclick="navigate('funds')">Back to Funds</button>
+      </div>
+    </div>`;
+  }
+  if (s === 2) {
+    body += `<div class="card">
+      <h2>2. Select Bank Account</h2>
+      <p class="muted">Amount: <strong>${money(w.amount)}</strong></p>
+      <div class="field"><label>Verified Bank</label>
+        <select id="wdBank">
+          <option value="">Select bank account</option>
+          <option ${w.bank === "Primary Bank ••••1234" ? "selected" : ""}>Primary Bank ••••1234</option>
+          <option ${w.bank === "Secondary Bank ••••5678" ? "selected" : ""}>Secondary Bank ••••5678</option>
+        </select>
+      </div>
+      <div class="section row">
+        <button class="btn" onclick="wdBack(2)">Back</button>
+        <button class="btn primary" onclick="wdNext(2)">Continue</button>
+      </div>
+    </div>`;
+  }
+  if (s === 3) {
+    body += `<div class="card">
+      <h2>3. Review Withdrawal</h2>
+      <div class="tablewrap"><table class="table"><tbody>
+        ${detailRow("Amount", money(w.amount))}
+        ${detailRow("Bank", w.bank || "—")}
+        ${detailRow("Account", state.user.account)}
+      </tbody></table></div>
+      <div class="section">
+        <label class="checkline"><input id="wdConfirm" type="checkbox"> I confirm this withdrawal request.</label>
+      </div>
+      <div class="section row">
+        <button class="btn" onclick="wdBack(3)">Back</button>
+        <button class="btn primary" onclick="wdNext(3)">Submit Withdrawal</button>
+      </div>
+    </div>`;
+  }
+  if (s === 4) {
+    body += `<div class="card">
+      <h2>4. Withdrawal Status</h2>
+      <span class="tag warn">REQUESTED</span>
+      <p style="margin-top:12px">Amount: <strong>${money(w.amount)}</strong></p>
+      <p>Bank: <strong>${w.bank || "—"}</strong></p>
+      <p class="muted">Final settlement is subject to bank reconciliation and account controls.</p>
+      <div class="section row">
+        <button class="btn primary" onclick="navigate('funds')">Open Funds</button>
+        <button class="btn" onclick="wdReset()">New Withdrawal</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById("app").innerHTML =
+    head("Withdraw Funds", "Amount → Bank → Review → Status") + body;
+}
+function wdNext(step) {
+  const w = withdrawFlow();
+  if (step === 1) {
+    const a = Number(document.getElementById("wdAmt")?.value || 0);
+    if (a < 1) return toast("Enter a valid withdrawal amount.");
+    w.amount = a; w.step = 2;
+  } else if (step === 2) {
+    const b = document.getElementById("wdBank")?.value || "";
+    if (!b) return toast("Select a verified bank account.");
+    w.bank = b; w.step = 3;
+  } else if (step === 3) {
+    if (!document.getElementById("wdConfirm")?.checked) return toast("Confirm the withdrawal details.");
+    if (!window.TREDIN_API?.funds?.withdraw) return toast("Withdrawal API is not configured.");
+    return tredinApiCall(() => window.TREDIN_API.funds.withdraw({ amount:Number(w.amount), bank:w.bank, idempotencyKey:(crypto?.randomUUID?.()||String(Date.now())) }), "Submitting withdrawal request…")
+      .then(r => { w.step=4; w.confirmed=true; state.withdrawFlow=w; if(r?.data?.funds) state.funds=r.data.funds; if(r?.data?.requests) state.fundRequests=r.data.requests; toast("Withdrawal request submitted."); withdrawPage(); })
+      .catch(e => toast(e.message || "Withdrawal request failed."));
+  }
+  saveWithdrawFlow(w);
+  withdrawPage();
+}
+function wdBack(step) {
+  const w = withdrawFlow();
+  w.step = Math.max(1, step - 1);
+  saveWithdrawFlow(w);
+  withdrawPage();
+}
+function wdReset() {
+  state.withdrawFlow = { step: 1, amount: "", bank: "", confirmed: false };
+  save();
+  withdrawPage();
+}
+
+/* ---------- Options / Strategy / Alerts / Reports / Risk ---------- */
+function options() {
+  document.getElementById("app").innerHTML =
+    head("Options Hub", "Option chain & contracts",
+      `<button class="btn primary" onclick="navigate('strategy')">Strategy Lab</button>`) +
+    `<div class="grid g3">
+      ${metric("Underlying", "NIFTY", "Server data")}
+      ${metric("ATM", "25,000", "Server data")}
+      ${metric("Expiry", "25-Sep-2026", "Server data")}
+    </div>
+    <div class="section card">
+      <h2>Option Chain</h2>
+      <div class="tablewrap"><table class="table">
+        <thead><tr><th>Call LTP</th><th>Call OI</th><th>Strike</th><th>Put OI</th><th>Put LTP</th><th></th></tr></thead>
+        <tbody>${[24900,25000,25100,25200,25300].map((s, n) =>
+          `<tr>
+            <td>${[420,315,240,175,125][n]}</td>
+            <td>${(1.2 + n * 0.3).toFixed(2)}L</td>
+            <td><strong>${s}</strong></td>
+            <td>${(1.4 + n * 0.25).toFixed(2)}L</td>
+            <td>${[95,205,285,385,495][n]}</td>
+            <td><button class="btn" onclick="navigate('instrumentHub',{id:'${n % 2 ? "NIFTY25000CE" : "NIFTY25000PE"}'})">Open</button></td>
+          </tr>`).join("")}
+        </tbody>
+      </table></div>
+      <div class="section row">
+        <span class="tag">PCR 1.08</span>
+        <span class="tag">Max Pain 25,000</span>
+        <span class="tag">IV</span>
+      </div>
+    </div>`;
+}
+function strategy() {
+  document.getElementById("app").innerHTML =
+    head("Strategy Lab", "Multi-leg option strategies",
+      `<button class="btn" onclick="navigate('options')">Option Chain</button>`) +
+    `<div class="grid g2">
+      <div class="card">
+        <h2>Strategy Legs</h2>
+        <div id="legs">${strategyLeg(0)}${strategyLeg(1)}</div>
+        <button class="btn" onclick="addLeg()">+ Add Leg</button>
+      </div>
+      <div class="card">
+        <h2>Analysis</h2>
+        <div class="grid g2">
+          ${metric("Max Profit", "Calculated", "Estimate")}
+          ${metric("Max Loss", "Calculated", "Estimate")}
+          ${metric("Breakeven", "Calculated", "Estimate")}
+          ${metric("Margin Limit", state.funds.marginLimit==null?"—":money(state.funds.marginLimit), state.user?.marginPolicy ? `${state.user.marginPolicy.segment||"ALL"} · ${state.user.marginPolicy.product||"ALL"} · ${state.user.marginPolicy.status||"ACTIVE"}` : "Server / Admin RMS")}
+        </div>
+        <div class="section chart">${chartSvg(25000)}</div>
+        <div class="section card"><h3 style="margin:0 0 4px">Trading Margin Policy</h3><p class="muted" style="margin:0">${state.funds.marginLimit==null?"No margin limit has been supplied by the backend.":`Maximum: <strong>${money(state.funds.marginLimit)}</strong>`}</p>${state.user?.marginPolicy?`<p class="muted" style="margin:5px 0 0">${state.user.marginPolicy.segment||"ALL"} · ${state.user.marginPolicy.product||"ALL"} · ${state.user.marginPolicy.status||"ACTIVE"}</p>`:""}</div>
+        <p class="kpi-note">Payoff analytics are estimates, not advice.</p>
+        <button class="btn primary" onclick="toast('Strategy basket created for review.')">Review Strategy</button>
+      </div>
+    </div>`;
+}
+let legCount = 2;
+function strategyLeg(n) {
+  return `<div class="card" style="margin-bottom:8px">
+    <div class="row">
+      <select><option>BUY</option><option>SELL</option></select>
+      <select><option>CALL</option><option>PUT</option></select>
+      <input style="flex:1;min-width:80px" value="${25000 + n * 100}" type="number">
+      <input style="width:70px" value="1" type="number">
+      <button class="btn" onclick="this.parentElement.parentElement.remove()">×</button>
+    </div>
+  </div>`;
+}
+function addLeg() {
+  document.getElementById("legs").insertAdjacentHTML("beforeend", strategyLeg(legCount++));
+}
+function alerts() {
+  document.getElementById("app").innerHTML =
+    head("GTT / Alerts", "Conditional triggers",
+      `<button class="btn primary" onclick="newAlert()">Create Alert</button>`) +
+    `<div class="card"><div class="empty">No active GTT rules. Create an alert to test the flow.</div></div>`;
+}
+function newAlert() {
+  openModal(`<div class="modalhead"><h2>Create Alert</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="formgrid">
+      <div class="field"><label>Instrument</label>
+        <select>${MASTER.instruments.map(i => `<option>${i.symbol}</option>`).join("")}</select>
+      </div>
+      <div class="field"><label>Condition</label>
+        <select><option>Price crosses above</option><option>Price crosses below</option></select>
+      </div>
+      <div class="field"><label>Trigger</label><input type="number" value="25000"></div>
+      <div class="field"><label>Action</label>
+        <select><option>Notify only</option><option>Create order for review</option></select>
+      </div>
+    </div>
+    <div class="section"><button class="btn primary" onclick="closeModal();toast('Alert saved.')">Save Alert</button></div>`);
+}
+function reports() {
+  document.getElementById("app").innerHTML =
+    head("Reports", "Statements & trading reports",
+      `<button class="btn primary" onclick="generateReport()">Generate</button>`) +
+    `<div class="grid g3">${["Trade Book","P&L Statement","Ledger","Contract Note","Tax / Charges","Order Report"]
+      .map(x => `<div class="card"><strong>${x}</strong><p class="muted">Report template</p>
+        <button class="btn" onclick="generateReport('${x}')">Generate</button></div>`).join("")}</div>`;
+}
+function generateReport(name = "Trading Report") {
+  toast(name + " generated.");
+  openModal(`<div class="modalhead"><h2>${name}</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p class="muted">Report generation is available after backend report data is connected.</p>
+    <button class="btn primary" onclick="closeModal()">Close</button>`);
+}
+function risk() {
+  const used = state.funds.used;
+  const util = used / (state.funds.available + used) * 100;
+  const exposure = state.positions.reduce((a, p) =>
+    a + p.qty * instrument(p.instrument).price * instrument(p.instrument).lotSize, 0);
+  document.getElementById("app").innerHTML =
+    head("Risk Cockpit", "Margin, exposure & protection") +
+    `<div class="grid g4">
+      ${metric("Margin Utilization", num(util, 1) + "%", "Backend RMS")}
+      ${metric("Exposure", money(exposure), "Gross notional")}
+      ${metric("Open Positions", state.positions.length)}
+      ${metric("Protection", "SL / Target", "Per-position")}
+    </div>
+    <div class="section grid g2">
+      <div class="card">
+        <h2>Risk Checks</h2>
+        ${["Account active","Segment enabled","Market state","Quantity / lot valid","Margin available","Price / tick valid","Position limits"]
+          .map(x => `<p>✓ <strong>${x}</strong> <span class="tag good">PASS</span></p>`).join("")}
+      </div>
+      <div class="card">
+        <h2>Note</h2>
+        <p class="muted">Risk metrics are server estimates. Actual RMS and exchange rules become authoritative after backend integration.</p>
+      </div>
+    </div>`;
+}
+
+/* ---------- Account Center ---------- */
+function account() {
+  const k = state.kyc || { status: "ACTIVE", step: 7 };
+  document.getElementById("app").innerHTML =
+    head("Account Center", "Profile, KYC, funds & security") +
+    preApiBanner() +
+    `<div class="grid g3">
+      <div class="card">
+        <h2>Profile</h2>
+        <p class="muted">${state.user.name}<br>${state.user.email}</p>
+        <p>Account: <strong>${state.user.account}</strong></p>
+        <span class="tag good">${state.user.status}</span>
+        <div class="section row">
+          <button class="btn primary" onclick="navigate('profile')">Edit Profile</button>
+          <button class="btn danger" onclick="authLogout()">Sign out</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>KYC / Account Opening</h2>
+        <p class="muted">PAN · Bank · IPV · eSign · Nominee</p>
+        <span class="tag ${k.status === 'ACTIVE' ? 'good' : 'warn'}">${k.status || 'NOT_STARTED'}</span>
+        <div class="section row">
+          <button class="btn primary" onclick="navigate('kyc')">${k.status === 'ACTIVE' ? 'Review KYC' : 'Complete KYC'}</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Funds</h2>
+        <p>Available: <strong>${money(state.funds.available)}</strong></p>
+        <div class="section row">
+          <button class="btn primary" onclick="navigate('deposit')">Deposit</button>
+          <button class="btn" onclick="navigate('withdraw')">Withdraw</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Security</h2>
+        <p>MPIN <span class="tag good">Enabled</span></p>
+        <p>2FA / TOTP <span class="tag">Server</span></p>
+        <p>Active Sessions <span class="tag">1</span></p>
+        <button class="btn" onclick="openSecurity()">Manage Security</button>
+      </div>
+      <div class="card">
+        <h2>Signup / New Account</h2>
+        <p class="muted">Create a new account through the server workflow.</p>
+        <button class="btn" onclick="navigate('signup')">Open Signup</button>
+      </div>
+      <div class="card">
+        <h2>Activity</h2>
+        <p class="muted">${state.activity.length} events received from server.</p>
+        <button class="btn" onclick="openActivity()">View Activity</button>
+      </div>
+    </div>`;
+}
+function openActivity() {
+  openModal(`<div class="modalhead"><h2>Activity Log</h2><button class="close" onclick="closeModal()">×</button></div>
+    ${state.activity.length
+      ? state.activity.slice(0, 30).map(a =>
+          `<p>• ${new Date(a.time).toLocaleString("en-IN")} — <strong>${a.event}</strong></p>`).join("")
+      : `<div class="empty">No activity yet.</div>`}`);
+}
+function openSecurity() {
+  openModal(`<div class="modalhead"><h2>Security Center</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="card" style="box-shadow:none;background:#fafbfc">
+      <p>Session status <span class="tag good">ACTIVE</span></p>
+      <p>OTP / 2FA <span class="tag">Server verification</span></p>
+      <p>Device binding <span class="tag">Server</span></p>
+      <p class="muted">Real session rotation and device revocation require backend controls.</p>
+    </div>
+    <div class="section"><button class="btn primary" onclick="closeModal()">Done</button></div>`);
+}
+
+/* ---------- Profile workflow ---------- */
+function profile() {
+  const p = state.profile || {
+    name: state.user.name, mobile: state.user.mobile, email: state.user.email,
+    dob: "", address: "", city: "", pin: "", bankRef: ""
+  };
+  document.getElementById("app").innerHTML =
+    head("Profile", "Identity, contact & address",
+      `<button class="btn" onclick="navigate('account')">Account Center</button>`) +
+    `<div class="auth-wrap"><div class="card auth-card">
+      <div class="auth-badge">Profile Details</div>
+      <h2 style="margin-top:4px">Edit Profile</h2>
+      <div class="formgrid">
+        <div class="field"><label>Full Name *</label><input id="pfName" value="${esc(p.name || "")}"></div>
+        <div class="field"><label>Mobile *</label><input id="pfMobile" value="${esc(p.mobile || "")}" inputmode="numeric" maxlength="10"></div>
+        <div class="field"><label>Email *</label><input id="pfEmail" type="email" value="${esc(p.email || "")}"></div>
+        <div class="field"><label>Date of Birth</label><input id="pfDob" type="date" value="${esc(p.dob || "")}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Address</label><input id="pfAddress" value="${esc(p.address || "")}"></div>
+        <div class="field"><label>City</label><input id="pfCity" value="${esc(p.city || "")}"></div>
+        <div class="field"><label>PIN Code</label><input id="pfPin" value="${esc(p.pin || "")}" inputmode="numeric" maxlength="6"></div>
+        <div class="field" style="grid-column:1/-1"><label>Bank Reference</label><input id="pfBank" value="${esc(p.bankRef || "")}"></div>
+      </div>
+      <div class="section row">
+        <button class="btn primary" onclick="saveProfile()">Save Profile</button>
+        <button class="btn" onclick="navigate('account')">Cancel</button>
+      </div>
+    </div></div>`;
+}
+function esc(v) {
+  return String(v ?? "").replace(/[&<>'"]/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c]));
+}
+function saveProfile() {
+  return toast("Profile update API is not configured. No local profile change will be saved.");
+}
+
+/* ---------- Signup workflow ---------- */
+function signup() {
+  document.getElementById("app").innerHTML =
+    head("Create TredIN Account", "Sign up and continue to KYC",
+      `<button class="btn" onclick="navigate('account')">Account Center</button>`) +
+    `<div class="auth-wrap"><div class="card auth-card">
+      <div class="auth-badge">New Account</div>
+      <h2 style="margin-top:4px">Sign up</h2>
+      <p class="muted">Create an account, then complete KYC to activate trading.</p>
+      <div class="formgrid">
+        <div class="field"><label>Full Name *</label><input id="suName" autocomplete="name" placeholder="Your full name"></div>
+        <div class="field"><label>Mobile *</label><input id="suMobile" inputmode="numeric" maxlength="10" placeholder="10-digit mobile"></div>
+        <div class="field"><label>Email *</label><input id="suEmail" type="email" placeholder="name@example.com"></div>
+        <div class="field"><label>Password *</label><input id="suPass" type="password" placeholder="Min 8 characters"></div>
+        <div class="field"><label>Confirm Password *</label><input id="suPass2" type="password" placeholder="Re-enter password"></div>
+        <div class="field"><label>Referral Code</label><input id="suRef" placeholder="Optional"></div>
+      </div>
+      <div class="section">
+        <label class="checkline"><input id="suTerms" type="checkbox"> I agree to the terms and privacy notice.</label>
+      </div>
+      <div class="section row">
+        <button class="btn primary" onclick="doSignup()">Create Account</button>
+        <button class="btn" onclick="navigate('home')">Cancel</button>
+      </div>
+      <div class="section security-note">
+        <strong>Server mode</strong>
+        <span>Registration requires the configured backend registration contract.</span>
+      </div>
+    </div></div>`;
+}
+function doSignup() {
+  return toast("Account registration API contract is not configured. No local account will be created.");
+}
+
+/* ---------- KYC workflow (7 steps) ---------- */
+function kycEditResubmit() {
+  return toast("KYC resubmission state must be returned by the backend after a rejection. No local status change was made.");
+}
+function kycGet() {
+  const base = {
+    step: 1, status: "NOT_STARTED",
+    personal: {}, pan: {}, bank: {}, ipv: {}, esign: {}, nominee: {},
+    docs: {}
+  };
+  if (!state.kyc) return structuredClone(base);
+  if (!state.kyc.docs) state.kyc.docs = {};
+  return state.kyc;
+}
+function kycSave(k) { state.kyc = k; }
+function stepLabel(n, t, cur) {
+  return `<div class="kyc-step ${n === cur ? "current" : ""} ${n < cur ? "done" : ""}"><b>${n}</b><span>${t}</span></div>`;
+}
+/* Document upload slot — UI ready for POST /kyc/documents; backend handles upload progress */
+const KYC_DOC_RULES = {
+  PAN: { label: "PAN document", accept: "image/jpeg,image/png,application/pdf", maxMb: 5, required: true },
+  BANK_PROOF: { label: "Bank proof (cheque / statement)", accept: "image/jpeg,image/png,application/pdf", maxMb: 5, required: false },
+  PHOTO: { label: "Photograph / selfie", accept: "image/jpeg,image/png", maxMb: 2, required: true }
+};
+function kycDocState(docType) {
+  return (kycGet().docs || {})[docType] || { status: "EMPTY" };
+}
+function uploadSlotHtml(docType) {
+  const rule = KYC_DOC_RULES[docType];
+  const d = kycDocState(docType);
+  const st = d.status || "EMPTY";
+  const cls = st === "UPLOADED" ? "is-ok" : st === "FAILED" ? "is-fail" : st === "UPLOADING" ? "is-uploading" : "";
+  let body = "";
+  if (st === "EMPTY" || st === "FAILED") {
+    body = `<input type="file" accept="${rule.accept}" onchange="kycStartUpload('${docType}', this)">
+      ${st === "FAILED" ? `<p class="us-file" style="color:var(--bad);margin-top:8px">${esc(d.error || "Upload failed")}</p>` : ""}`;
+  } else if (st === "UPLOADING") {
+    body = `<div class="us-progress"><i style="width:${d.progress || 10}%"></i></div>
+      <p class="us-meta">Uploading ${esc(d.fileName || "")}… ${d.progress || 0}%</p>`;
+  } else if (st === "UPLOADED") {
+    body = `<p class="us-file">Selected · ${esc(d.fileName)} · ${esc(d.sizeLabel || "")}</p>
+      <p class="us-meta">Backend upload required before this document receives a server document ID.</p>
+      <div class="row" style="margin-top:8px">
+        <button type="button" class="btn" onclick="kycReplaceDoc('${docType}')">Replace</button>
+        <button type="button" class="btn danger" onclick="kycRemoveDoc('${docType}')">Remove</button>
+      </div>`;
+  }
+  return `<div class="upload-slot ${cls}" id="slot-${docType}">
+    <p class="us-title">${rule.label}${rule.required ? " *" : ""}</p>
+    <p class="us-meta">PDF / JPG / PNG · max ${rule.maxMb} MB</p>
+    ${body}
+  </div>`;
+}
+function kycStartUpload(docType, input) {
+  const rule = KYC_DOC_RULES[docType];
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  const k = kycGet();
+  k.docs = k.docs || {};
+  const maxBytes = rule.maxMb * 1024 * 1024;
+  const okType = /^(image\/(jpeg|png)|application\/pdf)$/i.test(file.type) || /\.(pdf|jpe?g|png)$/i.test(file.name);
+  if (!okType) {
+    k.docs[docType] = { status: "FAILED", error: "File type not allowed. Use PDF or JPG/PNG." };
+    kycSave(k); kyc(); return toast("File type not allowed");
+  }
+  if (file.size > maxBytes) {
+    k.docs[docType] = { status: "FAILED", error: `File too large. Maximum ${rule.maxMb} MB.` };
+    kycSave(k); kyc(); return toast("File too large");
+  }
+  k.docs[docType] = { status: "READY_FOR_UPLOAD", fileName: file.name, contentType: file.type || "application/octet-stream", sizeBytes: file.size, sizeLabel: (file.size / 1024).toFixed(0) + " KB" };
+  kycSave(k); kyc();
+  toast("Document selected. Backend document upload is required before submission.");
+}
+function kycReplaceDoc(docType) {
+  return toast("KYC document API is not configured. Document replacement is blocked until backend upload contract is connected.");
+}
+function kycRemoveDoc(docType) {
+  return toast("KYC document removal API is not configured. No local document state was changed.");
+}
+function kyc() {
+  const k = kycGet();
+  const locked = k.status === "SUBMITTED" || k.status === "IN_REVIEW" || k.status === "APPROVED";
+  const step = Math.max(1, Math.min(7, k.step || 1));
+  const labels = ["Personal", "PAN / KYC", "Bank", "IPV", "eSign", "Nominee", "Review"];
+  const statusTag =
+    k.status === "APPROVED" || k.status === "ACTIVE" ? "good" :
+    k.status === "REJECTED" ? "bad" :
+    k.status === "SUBMITTED" || k.status === "IN_REVIEW" ? "warn" : "warn";
+  let body;
+  if (k.status === "SUBMITTED" || k.status === "IN_REVIEW") {
+    body = `<div class="card kyc-card">
+      <div class="ui-state info">Application ${k.status === "IN_REVIEW" ? "in review" : "submitted"}</div>
+      <h2 style="margin-top:14px">Verification in progress</h2>
+      <p class="muted">Documents and details are with the operations team. You cannot edit this application until a decision is made.</p>
+      <p>Submitted: <strong>${esc(k.submittedAt || "—")}</strong></p>
+      <div class="section row">
+        <button class="btn" onclick="navigate('account')">Back to Account</button>
+        <button class="btn" onclick="kyc()">Refresh status</button>
+      </div>
+      <p class="kpi-note">Live builds poll GET /kyc/application for status changes.</p>
+    </div>`;
+  } else if (k.status === "APPROVED" || k.status === "ACTIVE") {
+    body = `<div class="card kyc-card">
+      <div class="ui-state success">KYC approved</div>
+      <p class="muted" style="margin-top:12px">Account opening verification is complete.</p>
+      <button class="btn primary" onclick="navigate('home')">Go to Home</button>
+    </div>`;
+  } else if (k.status === "REJECTED") {
+    body = `<div class="card kyc-card">
+      <div class="ui-state error">KYC rejected</div>
+      <p style="margin-top:12px">${esc(k.rejectNote || "Please fix the issues and resubmit.")}</p>
+      <button class="btn primary" onclick="kycEditResubmit()">Edit & resubmit</button>
+    </div>`;
+  } else {
+    body = `<div class="kyc-steps">${labels.map((x, i) => stepLabel(i + 1, x, step)).join("")}</div>
+     <div class="card kyc-card">${kycStepContent(step, k)}</div>`;
+  }
+  document.getElementById("app").innerHTML =
+    head("Account Opening & KYC", locked ? "Application under verification" : "Complete each step, then submit for review",
+      `<span class="tag ${statusTag}">${k.status}</span>
+       <button class="btn" onclick="navigate('account')">Account</button>`) + body;
+  decorateButtons();
+}
+function kycStepContent(s, k) {
+  if (s === 1) return `<h2>1. Personal Details</h2>
+    <p class="muted">Verify basic account information.</p>
+    <div class="formgrid">
+      <div class="field"><label>Full Name *</label><input id="kName" value="${esc(k.personal.name || state.user.name || "")}"></div>
+      <div class="field"><label>Mobile *</label><input id="kMobile" value="${esc(k.personal.mobile || state.user.mobile || "")}" inputmode="numeric" maxlength="10"></div>
+      <div class="field"><label>Email *</label><input id="kEmail" type="email" value="${esc(k.personal.email || state.user.email || "")}"></div>
+      <div class="field"><label>Date of Birth *</label><input id="kDob" type="date" value="${esc(k.personal.dob || "")}"></div>
+      <div class="field" style="grid-column:1/-1"><label>Address *</label><input id="kAddress" value="${esc(k.personal.address || "")}"></div>
+      <div class="field"><label>City *</label><input id="kCity" value="${esc(k.personal.city || "")}"></div>
+      <div class="field"><label>PIN Code *</label><input id="kPin" value="${esc(k.personal.pin || "")}" inputmode="numeric" maxlength="6"></div>
+    </div>
+    <div class="section row"><button class="btn primary" onclick="kycNext(1)">Save & Continue</button></div>`;
+
+  if (s === 2) return `<h2>2. PAN & KYC</h2>
+    <p class="muted">Enter PAN details and upload a clear PAN document.</p>
+    <div class="formgrid">
+      <div class="field"><label>PAN *</label><input id="kPan" value="${esc(k.pan.pan || "")}" maxlength="10" style="text-transform:uppercase" placeholder="ABCDE1234F"></div>
+      <div class="field"><label>Name as per PAN *</label><input id="kPanName" value="${esc(k.pan.name || k.personal.name || "")}"></div>
+      <div class="field"><label>KYC Mode</label>
+        <select id="kKycMode"><option ${k.pan.mode === "DigiLocker" ? "selected" : ""}>DigiLocker</option>
+        <option ${k.pan.mode === "Manual Upload" ? "selected" : ""}>Manual Upload</option>
+        <option ${k.pan.mode === "CKYC" ? "selected" : ""}>CKYC</option></select>
+      </div>
+    </div>
+    <div class="section">${uploadSlotHtml("PAN")}</div>
+    <div class="section row">
+      <button class="btn" onclick="kycBack(2)">Back</button>
+      <button class="btn primary" onclick="kycNext(2)">Save & Continue</button>
+    </div>`;
+
+  if (s === 3) return `<h2>3. Bank Verification</h2>
+    <p class="muted">Link a bank account for pay-in and withdrawal.</p>
+    <div class="formgrid">
+      <div class="field"><label>Bank Name *</label><input id="kBankName" value="${esc(k.bank.name || "")}"></div>
+      <div class="field"><label>Account Number *</label><input id="kAcc" type="password" value="" placeholder="Enter account number"></div>
+      <div class="field"><label>IFSC *</label><input id="kIfsc" value="${esc(k.bank.ifsc || "")}" maxlength="11" style="text-transform:uppercase" placeholder="SBIN0001234"></div>
+      <div class="field"><label>Account Holder *</label><input id="kHolder" value="${esc(k.bank.holder || k.personal.name || "")}"></div>
+      <div class="field"><label>Verification</label>
+        <select id="kBankMode">
+          <option ${k.bank.mode === "Penny Drop" ? "selected" : ""}>Penny Drop</option>
+          <option ${k.bank.mode === "Cancelled Cheque" ? "selected" : ""}>Cancelled Cheque</option>
+          <option ${k.bank.mode === "Bank API" ? "selected" : ""}>Bank API</option>
+        </select>
+      </div>
+    </div>
+    <div class="section">${uploadSlotHtml("BANK_PROOF")}</div>
+    <p class="kpi-note">Bank proof is optional when penny-drop / bank API will verify the account later.</p>
+    <div class="section row">
+      <button class="btn" onclick="kycBack(3)">Back</button>
+      <button class="btn primary" onclick="kycNext(3)">Save & Continue</button>
+    </div>`;
+
+  if (s === 4) return `<h2>4. IPV — In-Person Verification</h2>
+    <p class="muted">Upload a clear photograph. Video IPV provider can be connected later.</p>
+    <div class="section">${uploadSlotHtml("PHOTO")}</div>
+    <div class="verify-box" style="margin-top:14px">
+      <div class="tag">STEP-UP VERIFICATION</div>
+      <h3 style="margin:8px 0 4px">Identity verification</h3>
+      <p class="muted">Confirm you completed the IPV checklist for this application.</p>
+      <label class="checkline"><input id="kIpvAgree" type="checkbox" ${k.ipv.confirmed ? "checked" : ""}>
+        I confirm the IPV step for this application.</label>
+    </div>
+    <div class="section row">
+      <button class="btn" onclick="kycBack(4)">Back</button>
+      <button class="btn primary" onclick="kycNext(4)">Confirm & Continue</button>
+    </div>`;
+
+  if (s === 5) return `<h2>5. eSign</h2>
+    <p class="muted">eSign consent for account opening documents.</p>
+    <div class="verify-box">
+      <div class="tag">ESIGN CONSENT</div>
+      <label class="checkline" style="margin-top:10px"><input id="kEsignAgree" type="checkbox" ${k.esign.consent ? "checked" : ""}>
+        I consent to the eSign step and accept the account opening documents.</label>
+      <p class="kpi-note">Production Aadhaar OTP / eSign requires the configured provider.</p>
+    </div>
+    <div class="section row">
+      <button class="btn" onclick="kycBack(5)">Back</button>
+      <button class="btn primary" onclick="kycNext(5)">Confirm & Continue</button>
+    </div>`;
+
+  if (s === 6) return `<h2>6. Nominee</h2>
+    <p class="muted">Add a nominee or mark as not applicable.</p>
+    <div class="formgrid">
+      <div class="field"><label>Nominee Name</label><input id="kNomName" value="${esc(k.nominee.name || "")}"></div>
+      <div class="field"><label>Relationship</label><input id="kNomRel" value="${esc(k.nominee.relationship || "")}"></div>
+      <div class="field"><label>Nominee DOB</label><input id="kNomDob" type="date" value="${esc(k.nominee.dob || "")}"></div>
+      <div class="field"><label>Share %</label><input id="kNomShare" type="number" min="1" max="100" value="${esc(k.nominee.share || "100")}"></div>
+      <div class="field" style="grid-column:1/-1">
+        <label class="checkline"><input id="kNomNA" type="checkbox" ${k.nominee.na ? "checked" : ""}>
+          I do not want to add a nominee right now.</label>
+      </div>
+    </div>
+    <div class="section row">
+      <button class="btn" onclick="kycBack(6)">Back</button>
+      <button class="btn primary" onclick="kycNext(6)">Save & Continue</button>
+    </div>`;
+
+  const docs = k.docs || {};
+  const docLine = (t) => {
+    const d = docs[t];
+    if (!d || d.status !== "UPLOADED") return `${t}: missing`;
+    return `${t}: ${d.fileName} (${d.documentId})`;
+  };
+  return `<h2>7. Final Review</h2>
+    <p class="muted">Submit for operations review. Approval is not automatic.</p>
+    <div class="review-grid">
+      <div class="card"><h3>Personal</h3>
+        <p>${esc(k.personal.name)} · ${esc(k.personal.mobile)}</p>
+        <p>${esc(k.personal.email)}</p>
+        <p>${esc(k.personal.city)} · ${esc(k.personal.pin)}</p>
+      </div>
+      <div class="card"><h3>PAN / KYC</h3>
+        <p>${esc(k.pan.pan)} · ${esc(k.pan.mode)}</p>
+        <p>${esc(k.pan.name)}</p>
+        <p class="muted">${esc(docLine("PAN"))}</p>
+      </div>
+      <div class="card"><h3>Bank</h3>
+        <p>${esc(k.bank.name)} · IFSC ${esc(k.bank.ifsc)}</p>
+        <p>Holder: ${esc(k.bank.holder)}</p>
+        <p class="muted">${esc(docLine("BANK_PROOF"))}</p>
+      </div>
+      <div class="card"><h3>Verification</h3>
+        <p>IPV: ${k.ipv.confirmed ? "Confirmed" : "Pending"}</p>
+        <p>eSign: ${k.esign.consent ? "Consented" : "Pending"}</p>
+        <p class="muted">${esc(docLine("PHOTO"))}</p>
+      </div>
+      <div class="card"><h3>Nominee</h3>
+        <p>${k.nominee.na ? "Not added" : esc(k.nominee.name) + " · " + esc(k.nominee.relationship)}</p>
+      </div>
+    </div>
+    <div class="section row">
+      <button class="btn" onclick="kycBack(7)">Back</button>
+      <button class="btn primary" onclick="submitKyc()">Submit for review</button>
+    </div>
+    <p class="kpi-note">After submit, status becomes SUBMITTED until admin/API decides APPROVED or REJECTED.</p>`;
+}
+function kycBack(s) {
+  const k = kycGet();
+  k.step = Math.max(1, s - 1);
+  kycSave(k);
+  kyc();
+}
+function kycNext(s) {
+  const k = kycGet();
+  if (s === 1) {
+    const name = document.getElementById("kName")?.value.trim() || "";
+    const mobile = document.getElementById("kMobile")?.value.trim() || "";
+    const email = document.getElementById("kEmail")?.value.trim() || "";
+    const dob = document.getElementById("kDob")?.value || "";
+    const address = document.getElementById("kAddress")?.value.trim() || "";
+    const city = document.getElementById("kCity")?.value.trim() || "";
+    const pin = document.getElementById("kPin")?.value.trim() || "";
+    if (name.length < 2 || !/^\d{10}$/.test(mobile) || !email || !dob || !address || !city || !/^\d{6}$/.test(pin))
+      return toast("Complete all required personal fields.");
+    k.personal = { name, mobile, email, dob, address, city, pin };
+  }
+  if (s === 2) {
+    const pan = (document.getElementById("kPan")?.value || "").trim().toUpperCase();
+    const name = document.getElementById("kPanName")?.value.trim() || "";
+    const mode = document.getElementById("kKycMode")?.value || "DigiLocker";
+    if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(pan) || !name) return toast("Enter a valid PAN and name.");
+    if (kycDocState("PAN").status !== "UPLOADED") return toast("Upload PAN document to continue.");
+    k.pan = { pan, name, mode, documentId: kycDocState("PAN").documentId };
+  }
+  if (s === 3) {
+    const name = document.getElementById("kBankName")?.value.trim() || "";
+    const account = document.getElementById("kAcc")?.value || "";
+    const ifsc = (document.getElementById("kIfsc")?.value || "").trim().toUpperCase();
+    const holder = document.getElementById("kHolder")?.value.trim() || "";
+    const mode = document.getElementById("kBankMode")?.value || "Penny Drop";
+    if (!name || account.length < 6 || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc) || !holder)
+      return toast("Complete valid bank details.");
+    if (mode === "Cancelled Cheque" && kycDocState("BANK_PROOF").status !== "UPLOADED")
+      return toast("Upload bank proof for cancelled cheque mode.");
+    k.bank = {
+      name, account: "••••" + account.slice(-4), ifsc, holder, mode, verified: false,
+      documentId: kycDocState("BANK_PROOF").documentId || null
+    };
+  }
+  if (s === 4) {
+    if (kycDocState("PHOTO").status !== "UPLOADED") return toast("Upload photograph for IPV.");
+    if (!document.getElementById("kIpvAgree")?.checked) return toast("Confirm IPV to continue.");
+    k.ipv = { confirmed: true, time: new Date().toISOString(), photoDocumentId: kycDocState("PHOTO").documentId };
+  }
+  if (s === 5) {
+    if (!document.getElementById("kEsignAgree")?.checked) return toast("Provide eSign consent to continue.");
+    k.esign = { consent: true, time: new Date().toISOString() };
+  }
+  if (s === 6) {
+    const na = document.getElementById("kNomNA")?.checked;
+    const name = document.getElementById("kNomName")?.value.trim() || "";
+    const relationship = document.getElementById("kNomRel")?.value.trim() || "";
+    const dob = document.getElementById("kNomDob")?.value || "";
+    const share = Number(document.getElementById("kNomShare")?.value || 0);
+    if (!na && (!name || !relationship || !dob || share < 1 || share > 100))
+      return toast("Complete nominee details or select not applicable.");
+    k.nominee = na ? { na: true } : { na: false, name, relationship, dob, share };
+  }
+  k.step = s + 1;
+  k.status = "IN_PROGRESS";
+  kycSave(k);
+  state.activity.unshift({ time: Date.now(), event: "KYC_STEP_COMPLETED", detail: { step: s }, source:"client-draft" });
+  save();
+  kyc();
+}
+function submitKyc() {
+  if (!window.TREDIN_API_CONTRACT?.customer?.account?.some(x => x.key === "kycSubmit"))
+    return toast("KYC submission API contract is not configured. No local submission will be recorded.");
+  return toast("KYC submission is waiting for the backend document/submission contract.");
+}
+function support() {
+  document.getElementById("app").innerHTML =
+    head("Support", "Help & system status",
+      `<button class="btn primary" onclick="openSupport()">Create Ticket</button>`) +
+    `<div class="grid g3">
+      <div class="card">
+        <strong>System Status</strong>
+        <p class="positive">All services operational</p>
+        <button class="btn" onclick="systemStatus()">View Status</button>
+      </div>
+      <div class="card">
+        <strong>Help Center</strong>
+        <p class="muted">Orders, funds, account, security.</p>
+        <button class="btn" onclick="toast('Help Center is available through support services.')">Open</button>
+      </div>
+      <div class="card">
+        <strong>Grievance</strong>
+        <p class="muted">Complaint tracking.</p>
+        <button class="btn" onclick="openSupport()">Raise</button>
+      </div>
+    </div>`;
+}
+function openSupport() {
+  openModal(`<div class="modalhead"><h2>Support Ticket</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="formgrid">
+      <div class="field"><label>Category</label>
+        <select><option>Trading</option><option>Funds</option><option>Account</option><option>Security</option><option>Complaint</option></select>
+      </div>
+      <div class="field"><label>Priority</label>
+        <select><option>Normal</option><option>High</option></select>
+      </div>
+      <div class="field" style="grid-column:1/-1"><label>Message</label>
+        <input id="supportMsg" placeholder="Describe the issue">
+      </div>
+    </div>
+    <div class="section"><button class="btn primary" onclick="closeModal();toast('Ticket created.')">Submit</button></div>`);
+}
+function systemStatus() {
+  openModal(`<div class="modalhead"><h2>TredIN System Status</h2><button class="close" onclick="closeModal()">×</button></div>
+    ${["Market Data","Orders / OMS","RMS","Funds","Notifications","Reports"]
+      .map(x => `<p>${x} <span class="tag good">OPERATIONAL</span></p>`).join("")}
+    <p class="muted">Market data will appear when the live feed is connected.</p>`);
+}
+
+/* ---------- Misc ---------- */
+function openNotifications() {
+  state.notifications.forEach(n => n.read = true);
+  save();
+  openModal(`<div class="modalhead"><h2>Notifications</h2><button class="close" onclick="closeModal()">×</button></div>
+    ${state.notifications.map(n => `<p>• ${n.text}</p>`).join("") || `<div class="empty">No notifications.</div>`}`);
+}
+function toggleWatch(id) {
+  if (state.watchlist.includes(id))
+    state.watchlist = state.watchlist.filter(x => x !== id);
+  else
+    state.watchlist.push(id);
+  save();
+  render();
+  toast("Watchlist updated.");
+}
+
+/* ---------- Render ---------- */
+function decorateButtons(){
+  const rules=[['buy','trade'],['sell','trade'],['trade','trade'],['order','orders'],['position','positions'],['portfolio','portfolio'],['deposit','deposit'],['withdraw','withdraw'],['kyc','kyc'],['review','eye'],['preview','eye'],['confirm','check'],['submit','check'],['save','check'],['apply','check'],['place','check'],['cancel','x'],['reset','refresh'],['refresh','refresh'],['search','search'],['filter','filter'],['add','plus'],['create','plus'],['edit','edit'],['delete','trash'],['remove','trash'],['download','download'],['export','download'],['back','back'],['next','arrow'],['continue','arrow'],['view','eye'],['details','eye'],['alert','bell'],['watch','star'],['fund','wallet'],['info','info']];
+  document.querySelectorAll('.btn').forEach(b=>{if(b.querySelector('.btn-icon'))return;const raw=((b.textContent||'')+' '+(b.getAttribute('onclick')||'')).toLowerCase();let name='arrow';for(const r of rules){if(raw.includes(r[0])){name=r[1];break}}const span=document.createElement('span');span.className='btn-icon';span.setAttribute('aria-hidden','true');span.innerHTML=iconSvg(name);b.prepend(span);});
+}
+
+function render() {
+  if(!isLoggedIn()){ showAuthGate(true); return; }
+  if (!isLoggedIn()) {
+    showAuthGate(true);
+    return;
+  }
+  showAuthGate(false);
+  const { route, id } = parse();
+  if (route === "login") { location.hash = "#/home"; return; }
+  document.querySelectorAll("[data-route]").forEach(x =>
+    x.classList.toggle("active", x.dataset.route === route));
+  const pages = {
+    home, markets, trade: () => trade(id), orders, positions, portfolio,
+    funds, options, strategy, alerts, reports, risk, account, support,
+    instrumentHub: () => instrumentHub(id),
+    deposit, withdraw: withdrawPage, profile, signup, kyc
+  };
+  (pages[route] || home)();
+  const nc = document.getElementById("notifCount");
+  if (nc) nc.textContent = state.notifications.filter(x => !x.read).length;
+  const pill = document.getElementById("userPill");
+  if (pill) {
+    const sess = getSession();
+    pill.textContent = ((sess && sess.user && sess.user.name) || state.user.name || "Account").split(" ")[0];
+  }
+  decorateButtons();
+}
+
+/* ---------- Global search ---------- */
+document.getElementById("globalSearch").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const q = e.target.value.toLowerCase();
+    const i = MASTER.instruments.find(x =>
+      (x.symbol + " " + x.name).toLowerCase().includes(q));
+    if (i) navigate("instrumentHub", { id: i.id });
+    else toast("No matching instrument.");
+  }
+});
+
+/* ---------- Live market-data boundary ---------- */
+function startMarketData(){
+  if (!window.TREDIN_API?.market?.quotes) return;
+  // WebSocket/SSE subscription will populate state when backend transport is supplied.
+}
+startMarketData();
+
+/* API INTEGRATION MAP — endpoint names are placeholders until backend contract is supplied. */
+window.TREDIN_API_MAP=window.TREDIN_API_MAP||{auth:{login:"/auth/login",refresh:"/auth/refresh",logout:"/auth/logout"},market:{quotes:"/market/quotes",instruments:"/market/instruments"},orders:{create:"/orders",list:"/orders",detail:"/orders/:id",cancel:"/orders/:id/cancel"},positions:{list:"/positions"},funds:{summary:"/funds",ledger:"/funds/ledger",deposit:"/funds/deposit",withdraw:"/funds/withdraw"},account:{me:"/me",kyc:"/kyc"},admin:{users:"/admin/users",orders:"/admin/orders",risk:"/admin/risk",audit:"/admin/audit"}};
+function tredinApiReady(){return !!(window.TREDIN_API&&window.TREDIN_API.mode!=="disabled");}
+/* TREDIN API-READY CONTRACT — API BOUNDARY
+   Set baseUrl to the supplied backend origin and keep UI state server-authoritative.
+   Endpoint behavior must follow the final backend contract before production. */
+window.TREDIN_API=window.TREDIN_API||{
+  version:"1.1",
+  mode:"live",
+  baseUrl:(window.TREDIN_CONFIG?.apiBaseUrl||document.documentElement.dataset.apiBaseUrl||""),
+  timeoutMs:12000,
+  get token(){ return getSession()?.token||null; },
+  requestId(){ return "REQ-"+Date.now()+"-"+crypto.randomUUID().slice(0,8); },
+  async request(path,options={},_retry=false){const c=new AbortController(),t=setTimeout(()=>c.abort(),this.timeoutMs);try{if(!this.baseUrl)throw new Error("API base URL is not configured.");const h={"Content-Type":"application/json","X-Request-ID":this.requestId(),...(options.headers||{})};if(this.token)h.Authorization="Bearer "+this.token;const r=await fetch(this.baseUrl+path,{...options,headers:h,signal:c.signal}),x=await r.text();let d=null;try{d=x?JSON.parse(x):null}catch{d=x}if(r.status===401&&!_retry&&path!=="/auth/login"&&path!=="/auth/refresh"){clearTimeout(t);if(await refreshAccessToken())return this.request(path,options,true);throw new Error("Your session has expired. Please sign in again.")}if(!r.ok)throw new Error((d&&d.message)||`HTTP ${r.status}`);return {ok:true,status:r.status,data:d}}finally{clearTimeout(t)}},
+  auth:{
+    login:p=>window.TREDIN_API.request("/auth/login",{method:"POST",body:JSON.stringify(p)}),
+    refresh:()=>window.TREDIN_API.request("/auth/refresh",{method:"POST"}),
+    logout:()=>window.TREDIN_API.request("/auth/logout",{method:"POST"})
+  },
+  market:{
+    quotes:ids=>window.TREDIN_API.request("/market/quotes"+(ids?`?ids=${encodeURIComponent(ids.join(","))}`:"")),
+    instruments:()=>window.TREDIN_API.request("/market/instruments")
+  },
+  orders:{
+    create:p=>window.TREDIN_API.request("/orders",{method:"POST",body:JSON.stringify(p)}),
+    list:()=>window.TREDIN_API.request("/orders"),
+    detail:id=>window.TREDIN_API.request(`/orders/${encodeURIComponent(id)}`),
+    cancel:id=>window.TREDIN_API.request(`/orders/${encodeURIComponent(id)}/cancel`,{method:"POST"})
+  },
+  positions:{
+    list:()=>window.TREDIN_API.request("/positions")
+  },
+  funds:{
+    summary:()=>window.TREDIN_API.request("/funds"),
+    ledger:()=>window.TREDIN_API.request("/funds/ledger"),
+    deposit:p=>window.TREDIN_API.request("/funds/deposit",{method:"POST",body:JSON.stringify(p)}),
+    withdraw:p=>window.TREDIN_API.request("/funds/withdraw",{method:"POST",body:JSON.stringify(p)})
+  },
+  account:{
+    me:()=>window.TREDIN_API.request("/me"),
+    kyc:()=>window.TREDIN_API.request("/kyc")
+  },
+  session:{
+    me:()=>window.TREDIN_API.request("/me")
+  }
+};
+
+/* ---------- STEP 5: API CONTRACT MAP ---------- */
+window.TREDIN_API_CONTRACT = {
+  version: "1.0",
+  sourceOfTruth: "backend",
+  customer: {
+    authentication: [
+      {key:"login",method:"POST",path:"/auth/login",auth:false},
+      {key:"refresh",method:"POST",path:"/auth/refresh",auth:true},
+      {key:"logout",method:"POST",path:"/auth/logout",auth:true}
+    ],
+    market: [
+      {key:"quotes",method:"GET",path:"/market/quotes",auth:true},
+      {key:"instruments",method:"GET",path:"/market/instruments",auth:true}
+    ],
+    trading: [
+      {key:"createOrder",method:"POST",path:"/orders",auth:true,idempotency:true},
+      {key:"listOrders",method:"GET",path:"/orders",auth:true},
+      {key:"orderDetail",method:"GET",path:"/orders/:id",auth:true},
+      {key:"cancelOrder",method:"POST",path:"/orders/:id/cancel",auth:true,idempotency:true},
+      {key:"positions",method:"GET",path:"/positions",auth:true}
+    ],
+    funds: [
+      {key:"summary",method:"GET",path:"/funds",auth:true},
+      {key:"ledger",method:"GET",path:"/funds/ledger",auth:true},
+      {key:"deposit",method:"POST",path:"/funds/deposit",auth:true,idempotency:true},
+      {key:"withdraw",method:"POST",path:"/funds/withdraw",auth:true,idempotency:true}
+    ],
+    account: [
+      {key:"me",method:"GET",path:"/me",auth:true},
+      {key:"kyc",method:"GET",path:"/kyc",auth:true}
+    ]
+  },
+  admin: [
+    {key:"users",method:"GET",path:"/admin/users",auth:true},
+    {key:"orders",method:"GET",path:"/admin/orders",auth:true},
+    {key:"risk",method:"GET",path:"/admin/risk",auth:true},
+    {key:"audit",method:"GET",path:"/admin/audit",auth:true}
+  ],
+  notInventedYet: [
+    "KYC approve/reject action endpoint",
+    "Admin deposit approval/credit endpoint",
+    "Admin withdrawal approval/payout endpoint",
+    "Admin user create/update/suspend endpoint",
+    "Admin instrument create/update/toggle endpoint",
+    "Real-time market/order execution WebSocket or SSE contract"
+  ]
+};
+function tredinContractReady(){ return !!(window.TREDIN_API_CONTRACT && window.TREDIN_API); }
+
+function apiBoundaryLabel(){return `<span class="api-boundary" title="Backend transport is not connected">API READY · ${window.TREDIN_API.mode.toUpperCase()}</span>`;}
+function apiErrorMessage(err,fallback="Something went wrong. Please try again."){console.warn("TredIN API boundary error",err);return err&&err.name==="AbortError"?"Request timed out. Please try again.":((err&&err.message)||fallback);}
+
+/* Boot — production auth gate */
+console.info("TredIN · mode=", authMode(), "· loggedIn=", isLoggedIn());
+if (window.TREDIN_API) {
+  Object.defineProperty(window.TREDIN_API, "token", {
+    get() { const s = getSession(); return s && s.token ? s.token : null; },
+    configurable: true
+  });
+}
+render();
+</script>
+
+<script id="tredin-step7-live-trading">
+/* STEP 7 — LIVE MARKET / ORDER EXECUTION BOUNDARY
+   No client-side prices, ticks, fills, positions, or order lifecycle simulation.
+   Market/order state is hydrated from the backend and remains server-authoritative.
+*/
+(function(){
+  window.TREDIN_LIVE = window.TREDIN_LIVE || {marketReady:false,realtimeReady:false,loading:false,lastSync:null,error:null};
+  const unwrap = r => r && r.data != null ? r.data : r;
+  const listOf = (d, keys) => {
+    if (Array.isArray(d)) return d;
+    for (const k of keys) if (Array.isArray(d?.[k])) return d[k];
+    return [];
+  };
+  function applyInstruments(rows){
+    if (!Array.isArray(rows) || !rows.length) return false;
+    const normalized = rows.map(x => ({...x, price: x.ltp ?? x.lastPrice ?? x.price ?? null}));
+    MASTER.instruments = normalized;
+    return true;
+  }
+  function applyQuotes(rows){
+    if (!Array.isArray(rows)) return false;
+    const byId = new Map(rows.map(x => [String(x.instrumentId ?? x.id ?? x.symbol), x]));
+    MASTER.instruments = MASTER.instruments.map(i => {
+      const q = byId.get(String(i.id)) || byId.get(String(i.symbol));
+      return q ? {...i, ...q, price:q.ltp ?? q.lastPrice ?? q.price ?? i.price} : i;
+    });
+    return true;
+  }
+  async function hydrateLiveTrading(){
+    if (window.TREDIN_LIVE.loading || !window.TREDIN_API?.baseUrl) return;
+    window.TREDIN_LIVE.loading=true; window.TREDIN_LIVE.error=null;
+    try {
+      const [ir,qr,or,pr] = await Promise.all([
+        window.TREDIN_API.market.instruments(),
+        window.TREDIN_API.market.quotes(),
+        window.TREDIN_API.orders.list(),
+        window.TREDIN_API.positions.list()
+      ]);
+      const instruments=listOf(unwrap(ir),['instruments','items','results']);
+      const quotes=listOf(unwrap(qr),['quotes','items','results']);
+      if (instruments.length) applyInstruments(instruments);
+      if (quotes.length) applyQuotes(quotes);
+      const orders=listOf(unwrap(or),['orders','items','results']);
+      const positions=listOf(unwrap(pr),['positions','items','results']);
+      if (orders.length || Array.isArray(unwrap(or))) state.orders=orders;
+      if (positions.length || Array.isArray(unwrap(pr))) state.positions=positions;
+      window.TREDIN_LIVE.marketReady = !!(instruments.length || quotes.length);
+      window.TREDIN_LIVE.lastSync = new Date().toISOString();
+      if (typeof render==='function') render();
+    } catch(e){
+      window.TREDIN_LIVE.error = e?.message || 'Live trading data unavailable.';
+      toast(window.TREDIN_LIVE.error);
+    } finally { window.TREDIN_LIVE.loading=false; }
+  }
+  function startRealtime(){
+    /* Transport is deliberately not invented. Backend must supply the agreed WS/SSE URL and event schema. */
+    window.TREDIN_LIVE.realtimeReady=false;
+  }
+  window.TREDIN_LIVE.hydrate = hydrateLiveTrading;
+  window.TREDIN_LIVE.startRealtime = startRealtime;
+
+  const originalConfirmOrder = window.confirmOrder;
+  window.confirmOrder = function(o){
+    if (!window.TREDIN_API?.orders?.create) return toast('Order API is not configured.');
+    if (!o?.instrument || !o?.side || !o?.qty || !o?.type) return toast('Complete the order fields before submission.');
+    if (window.__tredinBusy) return toast('Please wait — order request is already in progress.');
+    window.__tredinBusy=true; closeModal();
+    const key = (crypto.randomUUID ? crypto.randomUUID() : 'ID-'+Date.now());
+    const payload = {...o, idempotencyKey:key};
+    tredinApiCall(()=>window.TREDIN_API.orders.create(payload),'Submitting order to backend…')
+      .then(r=>{
+        const d=unwrap(r); const incoming=listOf(d,['orders','items','results']);
+        if (incoming.length) state.orders=incoming;
+        else if (d && typeof d==='object') state.orders=[d,...(state.orders||[])];
+        toast('Order accepted by backend. Execution status will update from server events/API.');
+        window.dispatchEvent(new Event('tredin:server-state-changed')); render();
+      })
+      .catch(e=>toast(e?.message||'Order submission failed.'))
+      .finally(()=>{window.__tredinBusy=false;});
+  };
+
+  /* Prevent client-side mark-to-market from pretending to be a live quote source. */
+  const originalCurrent = window.current;
+  window.current = function(id){ return Number(instrument(id)?.price ?? 0); };
+  window.applyTrade = function(){ toast('Positions are updated only after backend execution.'); };
+  window.simulateFill = function(){ toast('Client-side fills are disabled.'); };
+  window.fillOrder = function(){ toast('Execution events must come from the backend.'); };
+  window.advanceOrder = function(){ toast('Order lifecycle is backend-authoritative.'); };
+
+  /* Initial MASTER catalogue is not treated as market data; remove client price values.
+     Backend instruments/quotes replace it when the API base URL is configured. */
+  MASTER.instruments = MASTER.instruments.map(i=>({...i,price:null}));
+  hydrateLiveTrading();
+  startRealtime();
+})();
+</script>
+<script id="tredin-step9-sync">
+/* STEP 9 — CUSTOMER ↔ BACKEND SYNCHRONIZATION
+   Backend is the single source of truth. No cross-role browser-state bridge,
+   no client financial reconciliation, and no fabricated real-time events.
+*/
+(function(){
+  const LIVE = window.TREDIN_SYNC = window.TREDIN_SYNC || {inFlight:false,lastSync:null,error:null,source:"backend"};
+  const unwrap = r => r && r.data != null ? r.data : r;
+  const arr = (d, keys) => { if(Array.isArray(d)) return d; for(const k of keys){ if(Array.isArray(d?.[k])) return d[k]; } return []; };
+  const replace = (key, data, keys=[]) => { const a=arr(data,keys); if(a.length || Array.isArray(data)) state[key]=a; return a; };
+  async function syncCustomer(){
+    if(LIVE.inFlight || !isLoggedIn() || !window.TREDIN_API?.baseUrl) return false;
+    LIVE.inFlight=true; LIVE.error=null;
+    try{
+      const jobs = await Promise.allSettled([
+        window.TREDIN_API.account.me(),
+        window.TREDIN_API.funds.summary(),
+        window.TREDIN_API.funds.ledger(),
+        window.TREDIN_API.orders.list(),
+        window.TREDIN_API.positions.list(),
+        window.TREDIN_API.account.kyc()
+      ]);
+      const [me,funds,ledger,orders,positions,kyc]=jobs;
+      if(me.status==='fulfilled'){ const d=unwrap(me.value); state.user=d?.user||d?.data||d||{}; if(state.user?.marginLimit!=null) state.funds.marginLimit=state.user.marginLimit; }
+      if(funds.status==='fulfilled'){ const d=unwrap(funds.value); state.funds={...state.funds,...(d?.funds||d?.summary||d||{})}; }
+      if(ledger.status==='fulfilled') replace('ledger',unwrap(ledger.value),['ledger','items','entries']);
+      if(orders.status==='fulfilled') replace('orders',unwrap(orders.value),['orders','items','results']);
+      if(positions.status==='fulfilled') replace('positions',unwrap(positions.value),['positions','items','results']);
+      if(kyc.status==='fulfilled'){ const d=unwrap(kyc.value); state.kyc=d?.kyc||d?.application||d||state.kyc; }
+      LIVE.lastSync=new Date().toISOString();
+      if(typeof render==='function') render();
+      return true;
+    }catch(e){ LIVE.error=e?.message||'Backend synchronization failed.'; console.warn('TredIN sync',e); return false; }
+    finally{ LIVE.inFlight=false; }
+  }
+  function markStale(){ LIVE.stale=true; }
+  window.TREDIN_SYNC.customer=syncCustomer;
+  window.TREDIN_SYNC.markStale=markStale;
+  window.addEventListener('focus',()=>{ if(LIVE.stale) syncCustomer(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && LIVE.stale) syncCustomer(); });
+  window.addEventListener('tredin:server-state-changed',()=>syncCustomer());
+  const oldRender=window.render;
+  window.render=function(){ const r=oldRender.apply(this,arguments); if(window.TREDIN_API?.baseUrl && isLoggedIn() && !LIVE.lastSync) syncCustomer(); return r; };
+  syncCustomer();
+})();
+</script>
+<script id="tredin-preapi-final-lock">
+/* FINAL PRE-API LOCK — no simulated market, execution, funds, KYC, or admin mutations.
+   Backend/RMS is authoritative. Missing backend contracts remain explicitly gated. */
+(function(){
+  window.TREDIN_PREAPI_LOCK = {
+    serverAuthoritative:true,
+    fakeMarket:false,
+    fakeExecution:false,
+    fakeFinancialMutation:false,
+    crossRoleBrowserSync:false,
+    apiRequiredForMutations:true
+  };
+})();
+</script>
+<script id="tredin-preapi-hardening">
+(() => {
+  // FINAL PRE-API HARDENING: browser state is never the authority for financial/account mutations.
+  const block = (msg) => () => toast(msg);
+  window.saveProfile = block("Profile update API is not configured. No local profile change will be saved.");
+  window.kycReplaceDoc = block("KYC document upload/replacement API is not configured.");
+  window.kycRemoveDoc = block("KYC document removal API is not configured.");
+  window.kycEditResubmit = block("KYC resubmission API is not configured.");
+})();
+</script>
+</body>
+</html>

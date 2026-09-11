@@ -1,0 +1,3 @@
+Upload this entire folder's contents directly to the GitHub repository root.
+Customer: /
+Admin: /admin/
