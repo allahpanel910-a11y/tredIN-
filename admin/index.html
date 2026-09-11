@@ -1,0 +1,1498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b4fcf">
+<meta name="tredin-build" content="ADMIN API-READY FINAL">
+<title>TredIN Admin — Control Center</title>
+<style>
+:root{
+  --blue:#1769e0;--blue2:#123b68;--blue-soft:#eaf1ff;
+  --gold:#b88924;--gold2:#8a682f;--gold-soft:#fbf6e6;
+  --ink:#0c1829;--muted:#5a6a7e;--line:#e3e9f2;--bg:#eef2f7;
+  --card:#fff;--good:#16a34a;--bad:#dc2626;--warn:#f59e0b;
+  --side:#0f1b2d;--side2:#152338;--shadow:0 8px 28px rgba(12,35,70,.08);--r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.app{min-height:100vh;display:flex}
+
+/* Dark admin sidebar */
+.side{
+  width:248px;background:linear-gradient(180deg,var(--side) 0%,var(--side2) 100%);
+  color:#c5d0e0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;
+  flex-shrink:0;
+}
+.side-brand{
+  padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:10px;
+}
+.side-brand .logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(150deg,#4b96ff 0%,var(--blue) 48%,var(--gold2) 135%);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;
+  border:1px solid rgba(255,255,255,.35);
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.45),inset 0 -3px 5px rgba(0,0,0,.2),
+             0 3px 0 rgba(8,61,166,.5),0 10px 18px rgba(11,79,207,.35);
+}
+.side-brand h1{margin:0;font-size:16px;color:#fff;font-weight:800;letter-spacing:-.3px}
+.side-brand span{display:block;font-size:11px;color:#8b9bb0;margin-top:1px}
+.navgroup{margin:16px 14px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7c94;font-weight:700}
+.nav button{
+  width:calc(100% - 16px);margin:2px 8px;text-align:left;border:0;background:transparent;
+  color:#b8c5d8;padding:10px 12px;border-radius:10px;font-weight:550;display:flex;align-items:center;gap:10px;
+  transition:.15s;
+}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.active{background:rgba(11,79,207,.35);color:#fff;box-shadow:inset 3px 0 0 var(--gold)}
+.nav button .ico{width:22px;text-align:center;opacity:.9}
+.side-foot{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#7a8ba0}
+
+/* Main */
+.main-wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{
+  height:60px;background:#fff;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;padding:0 20px;position:sticky;top:0;z-index:20;
+  box-shadow:0 1px 0 rgba(201,162,39,.1);
+}
+.top h2{margin:0;font-size:16px;font-weight:750}
+.top .sub{color:var(--muted);font-size:12px}
+.top-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pill,.btn{
+  border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:8px 13px;font-weight:650;color:var(--ink);transition:.15s;
+}
+.pill:hover,.btn:hover{background:#f5f8fc}
+.btn.primary{background:linear-gradient(145deg,var(--blue),var(--blue2));color:#fff;border-color:var(--blue2);box-shadow:0 4px 12px rgba(11,79,207,.25)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.good{background:var(--good);color:#fff;border-color:var(--good)}
+.btn.gold{background:linear-gradient(145deg,var(--gold),var(--gold2));color:#fff;border-color:var(--gold2)}
+.btn.ghost{color:var(--blue);border-color:#c5d4f5;background:var(--blue-soft)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.content{padding:20px;max-width:1400px;width:100%;margin:0 auto}
+
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.page-head h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.3px}
+.page-head .sub{color:var(--muted);font-size:13px;margin-top:3px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.kpi{border-left:3px solid var(--blue);background:linear-gradient(165deg,#fff,#f8fafd)}
+.kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.35px;color:var(--muted);font-weight:700}
+.kpi .metric{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.kpi .note{font-size:11px;color:var(--muted);margin-top:4px}
+.section{margin-top:18px}
+.section h2{font-size:15px;margin:0 0 10px;font-weight:750}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.tablewrap{overflow:auto;border-radius:10px}
+.table{width:100%;border-collapse:collapse;min-width:640px}
+.table th,.table td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+.table th{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);background:#f8fafc;font-weight:750}
+.table tbody tr:hover{background:#f7f9fc}
+.tag{display:inline-flex;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:750;background:var(--blue-soft);color:var(--blue)}
+.tag.good{background:#e6f7ef;color:var(--good)}
+.tag.bad{background:#fff0f0;color:var(--bad)}
+.tag.warn{background:#fff8e6;color:var(--warn)}
+.tag.gold{background:var(--gold-soft);color:var(--gold2)}
+.tag.muted{background:#eef1f5;color:#64748b}
+
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.field label{display:block;font-size:12px;font-weight:700;color:#4a5a6e;margin-bottom:4px}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;outline:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,79,207,.12)}
+.field textarea{min-height:80px;resize:vertical}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filters input,.filters select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.banner{
+  margin:0 0 14px;padding:10px 14px;border-radius:12px;font-size:12px;
+  background:linear-gradient(135deg,#f7faff,#fbf8ef);border:1px solid rgba(201,162,39,.28);color:#3d4f66;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.empty{text-align:center;padding:36px;color:var(--muted);border:1px dashed var(--line);border-radius:12px;background:#fafbfc}
+.muted{color:var(--muted)}
+.positive{color:var(--good);font-weight:700}
+.negative{color:var(--bad);font-weight:700}
+
+.modalbg{position:fixed;inset:0;background:rgba(7,18,36,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;backdrop-filter:blur(3px)}
+.modal{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.25);border:1px solid rgba(201,162,39,.12)}
+.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modalhead h2{margin:0;font-size:18px}
+.close{border:0;background:#eef2f7;border-radius:8px;padding:6px 10px}
+.toast{position:fixed;right:16px;bottom:16px;background:#0c1829;color:#fff;padding:12px 15px;border-radius:11px;display:none;z-index:100;border-left:3px solid var(--gold);font-size:13px}
+
+.stepper{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.step-pill{padding:6px 11px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted);background:#fff}
+.step-pill.current{background:var(--blue-soft);border-color:#b6cff7;color:var(--blue)}
+.step-pill.done{background:#e6f7ef;border-color:#b6e4c8;color:var(--good)}
+
+.mobile-toggle{display:none;border:0;background:var(--blue-soft);color:var(--blue);border-radius:9px;padding:8px 10px;font-weight:700}
+
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){
+  .side{position:fixed;left:0;top:0;z-index:40;transform:translateX(-105%);transition:transform .25s}
+  .side.open{transform:translateX(0)}
+  .mobile-toggle{display:inline-flex}
+  .g4,.g3,.g2,.formgrid{grid-template-columns:1fr}
+  .content{padding:14px}
+}
+/* ADMIN PREMIUM UI POLISH */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;border-radius:10px;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(12,35,70,.12)}
+.btn:active{transform:translateY(1px) scale(.985)}
+.btn:focus-visible,.pill:focus-visible,.close:focus-visible{outline:3px solid rgba(11,79,207,.2);outline-offset:2px}
+.btn-icon{width:18px;height:18px;display:inline-grid;place-items:center;flex:0 0 18px}.btn-icon svg{width:18px;height:18px}
+.nav button{min-height:42px}.nav button .ico{width:26px!important;height:26px!important;display:grid!important;place-items:center;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}.nav button .ico svg{width:17px;height:17px}.nav button:hover .ico{background:rgba(255,255,255,.09)}
+.card{position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{border-color:#d9e2ef;box-shadow:0 12px 32px rgba(12,35,70,.09)}
+.kpi{min-height:112px}.kpi:hover{transform:translateY(-2px)}
+.tag{border:1px solid rgba(11,79,207,.08)}
+.workflow-rail{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:0 0 14px}.workflow-step{min-width:0;padding:9px 6px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:center;font-size:10px;font-weight:800;color:var(--muted)}.workflow-step b{display:block;font-size:9px;margin-bottom:2px;opacity:.7}.workflow-step.active{color:var(--blue);border-color:#b8cef5;background:var(--blue-soft)}.workflow-step.done{color:var(--good);border-color:#bde5ce;background:#effaf4}.workflow-step.failed{color:var(--bad);border-color:#efc2c2;background:#fff3f3}
+.order-side{display:inline-flex;align-items:center;gap:5px;font-weight:850;font-size:11px;padding:4px 8px;border-radius:7px}.order-side.buy{background:#eaf8f0;color:var(--good);border:1px solid #c6e8d4}.order-side.sell{background:#fff0f0;color:var(--bad);border:1px solid #efc9c9}
+.action-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:linear-gradient(135deg,#f9fbff,#fffdf7)}
+@media(max-width:760px){.workflow-rail{grid-template-columns:repeat(3,1fr)}.action-strip{flex-direction:column;align-items:stretch}}
+.ops-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.ops-stat{padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fafcff}
+.ops-stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.35px;color:var(--muted);font-weight:800}
+.ops-stat strong{display:block;margin-top:3px;font-size:16px;font-variant-numeric:tabular-nums}
+.severity{font-size:10px!important;letter-spacing:.4px}
+.workflow-rail .workflow-step{position:relative}
+.workflow-rail .workflow-step:after{content:"";position:absolute;right:-6px;top:50%;width:5px;border-top:1px solid var(--line)}
+.workflow-rail .workflow-step:last-child:after{display:none}
+.ops-detail{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}
+.confirm-box{padding:13px;border:1px solid #e1e7ef;border-radius:12px;background:linear-gradient(145deg,#fbfdff,#fffdf7)}
+.confirm-box strong{font-size:18px}
+.money-action{border-left:3px solid var(--gold)}
+.risk-critical{border-color:#efc2c2!important;background:linear-gradient(145deg,#fff5f5,#fff)!important}
+.risk-warn{border-color:#ead59d!important;background:linear-gradient(145deg,#fffaf0,#fff)!important}
+@media(max-width:760px){.ops-summary{grid-template-columns:1fr}.ops-detail{grid-template-columns:1fr}.workflow-rail .workflow-step:after{display:none}}
+@media(prefers-reduced-motion:reduce){.btn,.card,.kpi,.nav button{transition:none!important}}
+
+/* ---------- CINEMATIC 3D BUTTON SYSTEM ---------- */
+.btn{
+  border-radius:12px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.65) inset,
+    0 -6px 10px rgba(12,35,70,.05) inset,
+    0 1px 0 rgba(12,35,70,.06),
+    0 8px 18px rgba(12,35,70,.12);
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -6px 10px rgba(12,35,70,.05) inset,0 2px 0 rgba(12,35,70,.08),0 14px 26px rgba(12,35,70,.16)}
+.btn:active{transform:translateY(1px) scale(.98);box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 2px 6px rgba(12,35,70,.14)}
+.btn.primary{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 3px 0 var(--blue2),0 14px 26px rgba(11,79,207,.32)}
+.btn.primary:hover{box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 4px 0 var(--blue2),0 18px 32px rgba(11,79,207,.38)}
+.btn.danger{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 #8f1a22,0 14px 24px rgba(201,42,42,.30)}
+.btn.danger:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 #8f1a22,0 18px 30px rgba(201,42,42,.36)}
+.btn.good{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 #086b3b,0 14px 24px rgba(13,138,74,.28)}
+.btn.good:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 #086b3b,0 18px 30px rgba(13,138,74,.34)}
+.btn.gold{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 3px 0 var(--gold2),0 14px 24px rgba(201,162,39,.30)}
+.btn.gold:hover{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 0 var(--gold2),0 18px 30px rgba(201,162,39,.36)}
+.btn.ghost{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 3px 0 #b6cff7,0 10px 18px rgba(11,79,207,.16)}
+
+/* app-icon style 3D badge for icons inside buttons */
+.btn-icon{
+  border-radius:7px;
+  background:rgba(12,35,70,.06);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.55),
+    inset 0 -2px 3px rgba(0,0,0,.10),
+    0 2px 4px rgba(0,0,0,.12);
+}
+.btn.primary .btn-icon,.btn.danger .btn-icon,.btn.good .btn-icon,.btn.gold .btn-icon{
+  background:rgba(255,255,255,.20);
+}
+.btn:hover .btn-icon{transform:translateY(-1px) rotate(-4deg) scale(1.06)}
+.btn:active .btn-icon{transform:translateY(0) scale(.94)}
+
+/* Compact action buttons inside data tables (Manage/View/Credit/Reject etc.) */
+.table td .btn{min-height:30px;padding:6px 10px;font-size:12px;border-radius:9px;gap:5px}
+.table td .btn-icon{width:15px;height:15px;flex-basis:15px}
+.table td .btn-icon svg{width:15px;height:15px}
+
+@media(prefers-reduced-motion:reduce){
+  .btn,.btn-icon{transition:none!important}
+  .btn:hover,.btn:active,.btn:hover .btn-icon,.btn:active .btn-icon{transform:none!important}
+}
+
+/* ADMIN V5 RESPONSIVE + OPERATIONS FINAL LOCK */
+html,body{max-width:100%;overflow-x:hidden}
+.app,.main-wrap,.content,#app{min-width:0;max-width:100%}
+.tablewrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table{min-width:760px}
+.page-head{gap:12px}
+.page-head .row{flex-wrap:wrap;justify-content:flex-end}
+.action-strip{min-width:0}
+.confirm-box{min-width:0;overflow-wrap:anywhere}
+.modal{max-width:calc(100vw - 24px);box-sizing:border-box}
+@media(max-width:700px){
+ .top{gap:8px}.top h1{font-size:17px}.top .pill{padding:7px 9px}
+ .page-head{align-items:flex-start;flex-direction:column}.page-head .row{width:100%;justify-content:flex-start}
+ .page-head .row .btn{flex:1 1 auto}
+ .card{max-width:100%}.filters{flex-wrap:wrap}.filters>*{min-width:0;max-width:100%}
+ .workflow-rail{grid-template-columns:repeat(2,1fr);gap:6px}.workflow-step{font-size:10px;padding:8px 5px}
+ .action-strip{gap:9px}.action-strip .btn{width:100%}
+ .modal{width:calc(100vw - 20px)!important;margin:10px!important}
+}
+@media(max-width:420px){
+ .content{padding:10px}.top{padding:10px}.btn{min-height:40px}
+ .page-head .row .btn{width:100%}.ops-stat strong{font-size:15px}
+ .workflow-rail{grid-template-columns:1fr 1fr}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* TREDIN ADMIN V6 — matching execution-state language */
+.admin-status-panel{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#f8fafc)}
+.admin-status-panel strong{font-size:13px}
+@media(max-width:700px){.admin-status-panel{font-size:12px}}
+/* API-ready state system */
+.api-boundary{white-space:nowrap}.state-panel{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:14px;display:flex;align-items:flex-start;gap:10px}.state-panel.loading{background:linear-gradient(90deg,#fff,#f5f8fc,#fff);background-size:200% 100%;animation:tredinShimmer 1.5s linear infinite}.state-panel.error{border-color:#efb8b8;background:#fff7f7}.state-panel.success{border-color:#b7dfc7;background:#f5fff8}@keyframes tredinShimmer{to{background-position:-200% 0}}@media(max-width:700px){.api-boundary{font-size:9px}.state-panel{padding:11px}}@media(prefers-reduced-motion:reduce){.state-panel.loading{animation:none}}
+</style>
+
+<style id="tredin-step2-design-lock">
+/* STEP 2 — locked visual system */
+:root{--focus:#1769e0;--buy:#16a34a;--sell:#dc2626;--pending:#f59e0b}
+body{background:var(--bg)}
+.card{border-radius:14px;box-shadow:0 6px 22px rgba(15,23,42,.055)}
+.card:hover{border-color:#cbd5e1;box-shadow:0 10px 28px rgba(15,23,42,.08)}
+.btn.primary{background:linear-gradient(145deg,#1769e0,#123b68);border-color:#123b68}
+.btn.good{background:#16a34a;border-color:#16a34a}
+.btn.danger{background:#dc2626;border-color:#dc2626}
+.tag{font-weight:750}
+.tag.gold{color:#8a682f;background:#fbf6e6}
+input:focus,select:focus,textarea:focus{outline:0;border-color:#1769e0!important;box-shadow:0 0 0 3px rgba(23,105,224,.12)}
+</style>
+
+<style id="tredin-admin-step3-polish">
+/* STEP 3 — ADMIN MICRO POLISH: visual hierarchy only */
+:root{
+  --s3-blue:#1769E0;
+  --s3-navy:#123B68;
+  --s3-gold:#B88924;
+  --s3-green:#16A34A;
+  --s3-red:#DC2626;
+  --s3-amber:#F59E0B;
+}
+.side .navgroup{
+  letter-spacing:.08em;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.side button[data-route]{
+  transition:background-color .18s ease,transform .18s ease,border-color .18s ease;
+}
+.side button[data-route]:hover{
+  transform:translateX(2px);
+}
+.page-head{
+  gap:14px;
+  align-items:flex-start;
+}
+.page-head h1{
+  letter-spacing:-.025em;
+}
+.card{
+  border-radius:14px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+  transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease;
+}
+.card:hover{
+  box-shadow:0 8px 24px rgba(15,23,42,.07);
+}
+.kpi .metric,.kpi-card .metric{
+  letter-spacing:-.02em;
+}
+.btn.primary{
+  background:var(--s3-blue);
+}
+.btn.primary:hover{
+  filter:brightness(.96);
+}
+.btn.danger{
+  background:var(--s3-red);
+}
+.tag{
+  font-weight:800;
+  letter-spacing:.025em;
+}
+table{
+  border-collapse:separate;
+  border-spacing:0;
+}
+th{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.055em;
+  font-weight:800;
+}
+td,th{
+  vertical-align:middle;
+}
+tbody tr{
+  transition:background-color .15s ease;
+}
+tbody tr:hover{
+  background:#F8FAFC;
+}
+.modal{
+  border-radius:16px;
+  box-shadow:0 24px 70px rgba(15,23,42,.22);
+}
+.modalbg{
+  backdrop-filter:blur(3px);
+}
+.toast{
+  box-shadow:0 10px 28px rgba(15,23,42,.18);
+}
+@media(max-width:700px){
+  .page-head{gap:10px}
+  .page-head .row{width:100%}
+  .page-head .row .btn{min-height:42px}
+  .card{border-radius:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .card,.side button[data-route],tbody tr{transition:none}
+}
+</style>
+
+<style id="tredin-admin-step4-state-architecture">.api-state-note{display:flex;align-items:center;gap:8px;margin:10px 0;padding:9px 12px;border:1px solid #dbe4ef;border-radius:10px;background:#fff;color:#475569;font-size:12px}.api-state-note strong{color:#123b68}</style>
+<style>
+/* V5 unified design-system layer */
+:root{--focus:rgba(11,79,207,.28);--success-soft:#eaf8f0;--danger-soft:#fff0f0;--warning-soft:#fff7e8;--info-soft:#eef5ff;--radius-sm:10px;--radius-md:14px;--radius-lg:18px}
+:where(button,a,input,select,textarea):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.ui-state{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--card);font-size:13px;font-weight:700}
+.ui-state::before{content:"";width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 10%,transparent)}
+.ui-state.success{color:var(--good);background:var(--success-soft);border-color:#ccebd9}.ui-state.error{color:var(--bad);background:var(--danger-soft);border-color:#f2caca}.ui-state.warning{color:var(--warn);background:var(--warning-soft);border-color:#f0ddb8}.ui-state.info{color:var(--blue);background:var(--info-soft);border-color:#cddcff}
+.ui-loading{position:relative;overflow:hidden;color:transparent!important;background:linear-gradient(100deg,#eef2f7 30%,#fff 45%,#eef2f7 60%);background-size:220% 100%;animation:tredinShimmer 1.25s linear infinite;border-color:transparent}
+.ui-loading>*{visibility:hidden}.ui-loading::after{content:"";position:absolute;left:12px;right:12px;top:50%;height:8px;transform:translateY(-50%);border-radius:99px;background:rgba(90,106,126,.14)}
+@keyframes tredinShimmer{to{background-position:-220% 0}}
+.api-boundary{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--muted);background:#f7f9fc;border:1px dashed #cbd5e3;border-radius:8px;padding:5px 8px;display:inline-flex;align-items:center;gap:6px}.api-boundary::before{content:"API";color:var(--blue);font-size:9px}
+@media(max-width:700px){.ui-state{min-height:42px}.api-boundary{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ui-loading{animation:none;background:#eef2f7}}
+</style>
+<style id="tredin-admin-margin-limit">
+.margin-limit-note{border:1px solid #dbe4ef;background:#f8fafc;border-radius:12px;padding:12px 14px}
+.margin-limit-note{margin-top:10px;line-height:1.45}.margin-limit-note strong{display:block;color:#123b68;margin-bottom:2px}
+</style>
+<meta name="tredin-api-base-url" content="" data-api-base-url="">
+<script>
+/* API CONNECT STEP 1 — environment binding. No URL is invented here. */
+window.TREDIN_CONFIG=window.TREDIN_CONFIG||{apiBaseUrl:""};
+window.TREDIN_API_ENV={
+  configured(){return !!(window.TREDIN_CONFIG.apiBaseUrl||document.documentElement.dataset.apiBaseUrl);},
+  require(){if(!this.configured()) throw new Error("Backend API base URL is not configured.");return window.TREDIN_CONFIG.apiBaseUrl||document.documentElement.dataset.apiBaseUrl;}
+};
+</script>
+</head>
+<body data-tredin-admin-ui="v6">
+<div class="app">
+  <aside class="side" id="side">
+    <div class="side-brand">
+      <div class="logo">TA</div>
+      <div><h1>TredIN Admin</h1><span>Control Center</span></div>
+    </div>
+    <div class="nav">
+      <div class="navgroup">Overview</div>
+      <button data-route="dashboard" onclick="go('dashboard')"><span class="ico">▣</span> Dashboard</button>
+      <button data-route="risk" onclick="go('risk')"><span class="ico">◉</span> Risk Monitor</button>
+      <button data-route="margin" onclick="go('margin')"><span class="ico">◒</span> Margin Limits</button>
+      <div class="navgroup">Customers</div>
+      <button data-route="users" onclick="go('users')"><span class="ico">☺</span> Users</button>
+      <button data-route="kyc" onclick="go('kyc')"><span class="ico">📋</span> KYC Queue</button>
+      <button data-route="support" onclick="go('support')"><span class="ico">?</span> Support</button>
+      <div class="navgroup">Trading</div>
+      <button data-route="orders" onclick="go('orders')"><span class="ico">☷</span> Orders</button>
+      <button data-route="positions" onclick="go('positions')"><span class="ico">◒</span> Positions</button>
+      <button data-route="instruments" onclick="go('instruments')"><span class="ico">◈</span> Instruments</button>
+      <div class="navgroup">Money</div>
+      <button data-route="deposits" onclick="go('deposits')"><span class="ico">↓</span> Deposits</button>
+      <button data-route="withdrawals" onclick="go('withdrawals')"><span class="ico">↑</span> Withdrawals</button>
+      <button data-route="ledger" onclick="go('ledger')"><span class="ico">₹</span> Ledger</button>
+      <div class="navgroup">System</div>
+      <button data-route="audit" onclick="go('audit')"><span class="ico">▤</span> Audit Log</button>
+      <button data-route="settings" onclick="go('settings')"><span class="ico">⚙</span> Settings</button>
+      <button data-route="reports" onclick="go('reports')"><span class="ico">▦</span> Reports</button>
+    </div>
+    <div class="side-foot">ADMIN · Backend required<br>Static Demo Mode · Backend/API can be connected later</div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="top">
+      <button class="mobile-toggle" type="button" onclick="toggleSide()">☰</button>
+      <div>
+        <h2 id="topTitle">Dashboard</h2>
+        <div class="sub" id="topSub">Operations overview</div>
+      </div>
+      <div class="top-right">
+        <span class="tag gold">ADMIN</span>
+        <button class="pill" onclick="go('audit')">🔔 <span id="alertCount">0</span></button>
+        <button class="pill" onclick="toast('Admin session active')">Ops User</button>
+      </div>
+    </header>
+    <main class="content" id="app"></main>
+  </div>
+</div>
+<div class="modalbg" id="modalbg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* API INTEGRATION MAP — backend contract must be supplied before live connection. */
+window.TREDIN_API_MAP=window.TREDIN_API_MAP||{auth:{login:"/auth/login",refresh:"/auth/refresh",logout:"/auth/logout"},market:{quotes:"/market/quotes",instruments:"/market/instruments"},orders:{create:"/orders",list:"/orders",detail:"/orders/:id",cancel:"/orders/:id/cancel"},positions:{list:"/positions"},funds:{summary:"/funds",ledger:"/funds/ledger",deposit:"/funds/deposit",withdraw:"/funds/withdraw"},account:{me:"/me",kyc:"/kyc"},admin:{users:"/admin/users",orders:"/admin/orders",risk:"/admin/risk",audit:"/admin/audit",marginLimit:null}};
+function tredinApiReady(){return !!(window.TREDIN_API&&window.TREDIN_API.mode!=="disabled");}
+/* TREDIN API-READY CONTRACT — LIVE API BOUNDARY
+   To go live: set mode:"live", set baseUrl, ensure backend implements every
+   path in TREDIN_API_MAP above. Action-specific routes not yet in the map
+   (e.g. KYC approve/reject, deposit credit, withdrawal payout) still need
+   to be confirmed with the backend team before wiring kycFinal/depAction/
+   wdAction/confirmDeposit/confirmWithdrawal below. */
+window.TREDIN_API=window.TREDIN_API||{
+  version:"1.1",
+  mode:"static-demo",
+  baseUrl:(window.TREDIN_CONFIG?.apiBaseUrl||document.documentElement.dataset.apiBaseUrl||""),
+  timeoutMs:12000,
+  get token(){ return adminSession()?.token||null; },
+  requestId(){ return "REQ-"+Date.now()+"-"+crypto.randomUUID().slice(0,8); },
+  async request(path,options={},_retry=false){if(!this.baseUrl)throw new Error("API base URL is not configured.");const c=new AbortController(),t=setTimeout(()=>c.abort(),this.timeoutMs);try{const h={"Content-Type":"application/json","X-Request-ID":this.requestId(),...(options.headers||{})};if(this.token)h.Authorization="Bearer "+this.token;const r=await fetch(this.baseUrl+path,{...options,headers:h,signal:c.signal}),x=await r.text();let d=null;try{d=x?JSON.parse(x):null}catch{d=x}if(r.status===401&&!_retry&&path!=="/auth/login"&&path!=="/auth/refresh"){clearTimeout(t);if(await adminRefreshToken())return this.request(path,options,true);throw new Error("Your session has expired. Please sign in again.")}if(!r.ok)throw new Error((d&&d.message)||`HTTP ${r.status}`);return {ok:true,status:r.status,data:d}}finally{clearTimeout(t)}},
+  auth:{
+    login:p=>window.TREDIN_API.request("/auth/login",{method:"POST",body:JSON.stringify(p)}),
+    logout:()=>window.TREDIN_API.request("/auth/logout",{method:"POST"})
+  },
+  orders:{
+    list:()=>window.TREDIN_API.request("/orders"),
+    detail:id=>window.TREDIN_API.request(`/orders/${encodeURIComponent(id)}`),
+    cancel:id=>window.TREDIN_API.request(`/orders/${encodeURIComponent(id)}/cancel`,{method:"POST"})
+  },
+  positions:{
+    list:()=>window.TREDIN_API.request("/positions")
+  },
+  funds:{
+    summary:()=>window.TREDIN_API.request("/funds")
+  },
+  account:{
+    kyc:()=>window.TREDIN_API.request("/kyc")
+  },
+  admin:{
+    users:()=>window.TREDIN_API.request("/admin/users"),
+    orders:()=>window.TREDIN_API.request("/admin/orders"),
+    risk:()=>window.TREDIN_API.request("/admin/risk"),
+    audit:()=>window.TREDIN_API.request("/admin/audit"),
+    setMarginLimit:(userId,payload)=>{const path=window.TREDIN_API_MAP?.admin?.marginLimit;if(!path)throw new Error("Admin margin-limit endpoint is not configured in the backend contract.");return window.TREDIN_API.request(path.replace(":id",encodeURIComponent(userId)),{method:"PATCH",body:JSON.stringify(payload)})}
+  },
+  session:{
+    me:()=>window.TREDIN_API.request("/me")
+  }
+};
+
+/* ---------- STEP 5: API CONTRACT MAP ---------- */
+window.TREDIN_API_CONTRACT = {
+  version: "1.0",
+  sourceOfTruth: "backend",
+  customer: {
+    authentication: [
+      {key:"login",method:"POST",path:"/auth/login",auth:false},
+      {key:"refresh",method:"POST",path:"/auth/refresh",auth:true},
+      {key:"logout",method:"POST",path:"/auth/logout",auth:true}
+    ],
+    market: [
+      {key:"quotes",method:"GET",path:"/market/quotes",auth:true},
+      {key:"instruments",method:"GET",path:"/market/instruments",auth:true}
+    ],
+    trading: [
+      {key:"createOrder",method:"POST",path:"/orders",auth:true,idempotency:true},
+      {key:"listOrders",method:"GET",path:"/orders",auth:true},
+      {key:"orderDetail",method:"GET",path:"/orders/:id",auth:true},
+      {key:"cancelOrder",method:"POST",path:"/orders/:id/cancel",auth:true,idempotency:true},
+      {key:"positions",method:"GET",path:"/positions",auth:true}
+    ],
+    funds: [
+      {key:"summary",method:"GET",path:"/funds",auth:true},
+      {key:"ledger",method:"GET",path:"/funds/ledger",auth:true},
+      {key:"deposit",method:"POST",path:"/funds/deposit",auth:true,idempotency:true},
+      {key:"withdraw",method:"POST",path:"/funds/withdraw",auth:true,idempotency:true}
+    ],
+    account: [
+      {key:"me",method:"GET",path:"/me",auth:true},
+      {key:"kyc",method:"GET",path:"/kyc",auth:true}
+    ]
+  },
+  admin: [
+    {key:"users",method:"GET",path:"/admin/users",auth:true},
+    {key:"orders",method:"GET",path:"/admin/orders",auth:true},
+    {key:"risk",method:"GET",path:"/admin/risk",auth:true},
+    {key:"audit",method:"GET",path:"/admin/audit",auth:true}
+  ],
+  notInventedYet: [
+    "KYC approve/reject action endpoint",
+    "Admin deposit approval/credit endpoint",
+    "Admin withdrawal approval/payout endpoint",
+    "Admin user create/update/suspend endpoint",
+    "Admin instrument create/update/toggle endpoint",
+    "Real-time market/order execution WebSocket or SSE contract"
+  ]
+};
+function tredinContractReady(){ return !!(window.TREDIN_API_CONTRACT && window.TREDIN_API); }
+
+function apiBoundaryLabel(){return `<span class="api-boundary" title="Backend transport is not connected">API READY · ${window.TREDIN_API.mode.toUpperCase()}</span>`;}
+function apiErrorMessage(err,fallback="Something went wrong. Please try again."){console.warn("TredIN API boundary error",err);return err&&err.name==="AbortError"?"Request timed out. Please try again.":((err&&err.message)||fallback);}
+
+"use strict";
+const KEY = "tredin_admin_v1";
+const ADMIN_AUTH_KEY="tredin_admin_session_v1", ADMIN_AUTH_MAX_AGE_MS=8*60*60*1000;
+function adminSession(){try{return JSON.parse(sessionStorage.getItem(ADMIN_AUTH_KEY)||"null")}catch{return null}}
+function adminSetSession(v){sessionStorage.setItem(ADMIN_AUTH_KEY,JSON.stringify(v))}
+function adminClearSession(){sessionStorage.removeItem(ADMIN_AUTH_KEY)}
+function adminLoggedIn(){const s=adminSession();return !!(s?.token&&(!s.at||Date.now()-s.at<ADMIN_AUTH_MAX_AGE_MS))}
+function adminAuthError(msg){const e=document.getElementById("adminAuthErr");if(!e)return;e.style.display=msg?"flex":"none";e.textContent=msg||""}
+function adminShowAuth(show){const e=document.getElementById("adminAuthGate");if(e)e.style.display=show?"flex":"none"}
+const TREDIN_STATIC_DEMO_ADMIN={identifier:"9826675372",password:"Ayat@5282"};
+async function adminAuthSubmit(){const id=(document.getElementById("adminAuthId")?.value||"").trim(),pass=document.getElementById("adminAuthPass")?.value||"";adminAuthError("");if(!id||!pass)return adminAuthError("Enter your Admin ID and password.");const b=document.getElementById("adminAuthBtn");if(b){b.disabled=true;b.textContent="Signing in…"}try{if(id!==TREDIN_STATIC_DEMO_ADMIN.identifier||pass!==TREDIN_STATIC_DEMO_ADMIN.password)throw new Error("Invalid Admin ID or password.");adminSetSession({token:"STATIC-DEMO-ADMIN-SESSION",refreshToken:null,user:{identifier:id,role:"ADMIN",mode:"STATIC_DEMO"},at:Date.now()});adminShowAuth(false);render()}catch(e){adminAuthError(e?.message||"Sign in failed. Please try again.")}finally{if(b){b.disabled=false;b.textContent="Sign in"}}}
+async function adminLogout(){adminClearSession();adminShowAuth(true)}
+async function adminRefreshToken(){const s=adminSession();if(!s?.refreshToken)return false;try{const r=await window.TREDIN_API.auth.refresh(),d=r?.data||{},token=d.accessToken||d.token;if(!token)return false;adminSetSession({...s,token,refreshToken:d.refreshToken||s.refreshToken,at:Date.now(),user:d.user||s.user});return true}catch(e){adminClearSession();adminShowAuth(true);return false}}
+const fresh = {
+  users: [],
+  kycQueue: [],
+  orders: [],
+  positions: [],
+  deposits: [],
+  withdrawals: [],
+  ledger: [],
+  tickets: [],
+  instruments: [],
+  audit: [],
+  settings: {
+    maintenance:false, newSignup:true, tradingEnabled:true, maxOrderValue:5000000,
+    rmsMode:"STRICT", supportEmail:"support@tredin.in"
+  }
+};
+
+let state = load();
+function load() { return structuredClone(fresh); }
+function save() {  }
+
+
+function money(n){ return "₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:2}); }
+function toast(t){ const e=document.getElementById("toast"); e.textContent=t; e.style.display="block"; clearTimeout(window.__t); window.__t=setTimeout(()=>e.style.display="none",2800); }
+function openModal(h){ document.getElementById("modal").innerHTML=h; document.getElementById("modalbg").style.display="flex"; }
+function closeModal(){ document.getElementById("modalbg").style.display="none"; }
+document.getElementById("modalbg").addEventListener("click",e=>{ if(e.target.id==="modalbg") closeModal(); });
+function audit(event, detail){ state.audit.unshift({ id:"AUD-"+Date.now(), time:new Date().toLocaleString("en-IN"), actor:"ops@tredin", event, detail:String(detail||"") }); state.audit=state.audit.slice(0,200); save(); }
+function banner(){ return `<div class="banner"><span><strong>Admin frontend</strong> · Backend API required for live operations</span><span class="tag gold">API READY</span></div>`; }
+function head(title, sub, actions=""){ return `<div class="page-head"><div><h1>${title}</h1><div class="sub">${sub||""}</div></div><div class="row">${actions}</div></div>`; }
+function kpi(label,value,note=""){ return `<div class="card kpi"><div class="label">${label}</div><div class="metric">${value}</div><div class="note">${note}</div></div>`; }
+function toggleSide(){ document.getElementById("side").classList.toggle("open"); }
+
+function go(route){
+  location.hash = "#/"+route;
+  document.getElementById("side").classList.remove("open");
+  render();
+}
+function route(){ return (location.hash.replace(/^#\//,"")||"dashboard"); }
+window.addEventListener("hashchange", render);
+
+/* ---------- Server-state hydration boundary ---------- */
+let __hydrating=false;
+async function hydrateAdminState(){
+  if(__hydrating || !window.TREDIN_API?.baseUrl) return; __hydrating=true;
+  const jobs=[
+    ["users",()=>window.TREDIN_API.admin.users(),d=>{state.users=d.users||d.data||d}],
+    ["orders",()=>window.TREDIN_API.admin.orders(),d=>{state.orders=d.orders||d.data||d}],
+    ["risk",()=>window.TREDIN_API.admin.risk(),d=>{if(d.positions)state.positions=d.positions}],
+    ["audit",()=>window.TREDIN_API.admin.audit(),d=>{state.audit=d.audit||d.data||d}],
+    ["kyc",()=>window.TREDIN_API.account.kyc(),d=>{state.kycQueue=d.queue||d.kycQueue||d.data||d}]
+  ];
+  try{await Promise.allSettled(jobs.map(async([,fn,set])=>{const r=await fn();if(r?.data!=null)set(r.data);else if(r!=null)set(r);}));}
+  finally{__hydrating=false; render();}
+}
+
+/* ---------- Pages ---------- */
+function dashboard(){
+  const pendingKyc = state.kycQueue.filter(x=>x.status==="PENDING"||x.status==="IN_REVIEW").length;
+  const pendingDep = state.deposits.filter(x=>x.status==="PENDING").length;
+  const pendingWd = state.withdrawals.filter(x=>x.status==="PENDING").length;
+  const openT = state.tickets.filter(x=>x.status==="OPEN").length;
+  document.getElementById("app").innerHTML =
+    head("Dashboard","Operations overview",`<button class="btn" onclick="render()">Refresh</button>`) +
+    banner() +
+    `<div class="grid g4">
+      ${kpi("Active Users", state.users.filter(u=>u.status==="ACTIVE").length, "Customer accounts")}
+      ${kpi("KYC Queue", pendingKyc, "Pending / in review")}
+      ${kpi("Fund Requests", pendingDep+pendingWd, "Deposits + withdrawals")}
+      ${kpi("Open Tickets", openT, "Support")}
+    </div>
+    <div class="section grid g2">
+      <div class="card">
+        <h2>Needs attention</h2>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn primary" onclick="go('kyc')">Review KYC (${pendingKyc})</button>
+          <button class="btn" onclick="go('deposits')">Deposits (${pendingDep})</button>
+          <button class="btn" onclick="go('withdrawals')">Withdrawals (${pendingWd})</button>
+          <button class="btn" onclick="go('support')">Tickets (${openT})</button>
+        </div>
+        <p class="muted">Queue-first workflow: verify → approve/reject → audit.</p>
+      </div>
+      <div class="card">
+        <h2>Trading snapshot</h2>
+        <p>Open orders: <strong>${state.orders.filter(o=>o.status==="OPEN").length}</strong></p>
+        <p>Filled today: <strong>${state.orders.filter(o=>o.status==="FILLED").length}</strong></p>
+        <p>Open positions: <strong>${state.positions.length}</strong></p>
+        <div class="section row"><button class="btn ghost" onclick="go('orders')">Orders</button><button class="btn ghost" onclick="go('risk')">Risk</button></div>
+      </div>
+    </div>
+    <div class="section card">
+      <h2>Recent audit</h2>
+      <div class="tablewrap"><table class="table"><thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>${state.audit.slice(0,6).map(a=>`<tr><td>${a.time}</td><td>${a.actor}</td><td>${a.event}</td><td>${a.detail}</td></tr>`).join("")}</tbody></table></div>
+    </div>`;
+}
+
+function margin(){
+  const rows=state.users||[];
+  document.getElementById("app").innerHTML =
+    head("Margin Limits","Admin-controlled customer trading exposure",`<span class="tag warn">Backend endpoint required</span>`) +
+    banner() +
+    `<div class="card" style="margin-bottom:14px"><strong>Margin Limit Control</strong><p class="muted" style="margin:5px 0 0">Set a customer-level maximum trading margin. The backend/RMS remains authoritative; this screen never changes balance or buying power locally.</p></div>` +
+    `<div class="card"><div class="tablewrap"><table class="table"><thead><tr><th>Account</th><th>Name</th><th>Current Limit</th><th>Policy</th><th>Action</th></tr></thead><tbody>` +
+    (rows.length?rows.map(u=>`<tr><td><strong>${u.account||"—"}</strong></td><td>${u.name||"—"}</td><td>${u.marginLimit==null?"Not set":money(u.marginLimit)}</td><td>${u.marginPolicy?`${u.marginPolicy.segment||"ALL"} · ${u.marginPolicy.product||"ALL"} · ${u.marginPolicy.status||"ACTIVE"}`:"Default"}</td><td><button class="btn primary" onclick="openMarginLimit('${u.id}')">Set / Update</button></td></tr>`).join(""):`<tr><td colspan="5" class="muted">No customers loaded from backend.</td></tr>`) +
+    `</tbody></table></div></div>`;
+}
+function openMarginLimit(id){
+  const u=(state.users||[]).find(x=>x.id===id); if(!u) return;
+  openModal(`<div class="modalhead"><h2>Margin Limit</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p class="muted">${u.name||"Customer"} · ${u.account||""}</p>
+    <div class="grid g2">
+      <div class="field"><label>Maximum Margin Limit (₹)</label><input id="marginLimitInput" type="number" min="0" step="0.01" value="${u.marginLimit??""}" placeholder="Enter limit"></div>
+      <div class="field"><label>Policy Status</label><select id="marginPolicyStatus"><option value="ACTIVE">ACTIVE</option><option value="PAUSED">PAUSED</option></select></div>
+      <div class="field"><label>Segment</label><select id="marginSegment"><option value="ALL">All Segments</option><option value="EQUITY">Equity</option><option value="F&O">F&O</option><option value="COMMODITY">Commodity</option><option value="CURRENCY">Currency</option></select></div>
+      <div class="field"><label>Product</label><select id="marginProduct"><option value="ALL">All Products</option><option value="CNC">CNC</option><option value="MIS">MIS</option><option value="NRML">NRML</option></select></div>
+      <div class="field"><label>Valid From</label><input id="marginValidFrom" type="datetime-local"></div>
+      <div class="field"><label>Valid Until</label><input id="marginValidUntil" type="datetime-local"></div>
+    </div>
+    <div class="margin-limit-note"><strong>RMS policy control</strong><div class="muted">Limit controls permitted trading exposure. It does not credit funds or change cash balance. Final enforcement and persistence must happen in backend RMS.</div></div>
+    <div class="section row"><button class="btn primary" onclick="saveMarginLimit('${id}')">Save Policy</button><button class="btn" onclick="closeModal()">Cancel</button></div>`);
+}
+async function saveMarginLimit(id){
+  const input=document.getElementById("marginLimitInput"); const value=Number(input?.value);
+  if(!Number.isFinite(value)||value<0) return toast("Enter a valid non-negative margin limit.");
+  const btn=document.querySelector('#modal .btn.primary'); if(btn){btn.disabled=true;btn.textContent="Saving…";}
+  try{
+    if(!window.TREDIN_API?.admin?.setMarginLimit) throw new Error("Margin-limit API is not configured.");
+    const status=document.getElementById("marginPolicyStatus")?.value||"ACTIVE";
+    const segment=document.getElementById("marginSegment")?.value||"ALL";
+    const product=document.getElementById("marginProduct")?.value||"ALL";
+    const validFrom=document.getElementById("marginValidFrom")?.value||null;
+    const validUntil=document.getElementById("marginValidUntil")?.value||null;
+    if(validFrom && validUntil && new Date(validUntil)<=new Date(validFrom)) throw new Error("Valid Until must be later than Valid From.");
+    const r=await window.TREDIN_API.admin.setMarginLimit(id,{marginLimit:value,status,segment,product,validFrom,validUntil,idempotencyKey:(crypto?.randomUUID?.()||String(Date.now()))});
+    const d=r?.data||{}; const u=(state.users||[]).find(x=>x.id===id);
+    const updated=d.user||d.customer||d;
+    if(u && updated?.marginLimit!=null) { u.marginLimit=updated.marginLimit; u.marginPolicy=updated.marginPolicy||{status,segment,product,validFrom,validUntil}; }
+    closeModal(); toast("Margin limit updated by backend."); render();
+  }catch(e){ toast(e?.message||"Margin limit update failed."); if(btn){btn.disabled=false;btn.textContent="Save Limit";} }
+}
+
+function users(){
+  document.getElementById("app").innerHTML =
+    head("Users","Customer accounts",`<span class="tag warn">User mutations require backend contract</span>`) +
+    banner() +
+    `<div class="filters">
+      <input id="userQ" placeholder="Search name / account / mobile" oninput="filterUsers()">
+      <select id="userStatus" onchange="filterUsers()"><option value="">All status</option><option>ACTIVE</option><option>SUSPENDED</option></select>
+      <select id="userKyc" onchange="filterUsers()"><option value="">All KYC</option><option>APPROVED</option><option>PENDING</option><option>IN_REVIEW</option><option>REJECTED</option></select>
+    </div>
+    <div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Account</th><th>Name</th><th>Mobile</th><th>Status</th><th>KYC</th><th>Balance</th><th>Action</th></tr></thead>
+      <tbody id="userRows">${userRows(state.users)}</tbody>
+    </table></div></div>`;
+}
+function userRows(list){
+  if(!list.length) return `<tr><td colspan="7"><div class="empty">No users match.</div></td></tr>`;
+  return list.map(u=>`<tr>
+    <td><strong>${u.account}</strong></td><td>${u.name}</td><td>${u.mobile}</td>
+    <td><span class="tag ${u.status==="ACTIVE"?"good":"bad"}">${u.status}</span></td>
+    <td><span class="tag ${u.kyc==="APPROVED"?"good":u.kyc==="REJECTED"?"bad":"warn"}">${u.kyc}</span></td>
+    <td>${money(u.balance)}</td>
+    <td><button class="btn" onclick="userDetail('${u.id}')">View</button></td>
+  </tr>`).join("");
+}
+function filterUsers(){
+  const q=(document.getElementById("userQ")?.value||"").toLowerCase();
+  const st=document.getElementById("userStatus")?.value||"";
+  const k=document.getElementById("userKyc")?.value||"";
+  const list=state.users.filter(u=>{
+    const hit=!q||[u.name,u.account,u.mobile,u.email].join(" ").toLowerCase().includes(q);
+    return hit && (!st||u.status===st) && (!k||u.kyc===k);
+  });
+  const el=document.getElementById("userRows"); if(el) el.innerHTML=userRows(list);
+}
+function userDetail(id){
+  const u=state.users.find(x=>x.id===id); if(!u) return;
+  openModal(`<div class="modalhead"><h2>${u.name}</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p class="muted">${u.account} · ${u.email}</p>
+    <div class="formgrid">
+      <div class="field"><label>Status</label>
+        <select id="uStatus"><option ${u.status==="ACTIVE"?"selected":""}>ACTIVE</option><option ${u.status==="SUSPENDED"?"selected":""}>SUSPENDED</option></select>
+      </div>
+      <div class="field"><label>KYC flag</label>
+        <select id="uKyc"><option>APPROVED</option><option>PENDING</option><option>IN_REVIEW</option><option>REJECTED</option></select>
+      </div>
+    </div>
+    <p style="margin-top:10px">Balance: <strong>${money(u.balance)}</strong></p>
+    <div class="section row">
+      <button class="btn" disabled>Save · API contract pending</button>
+      <button class="btn danger" disabled>Suspend · API contract pending</button>
+      <button class="btn" onclick="closeModal()">Close</button>
+    </div>`);
+  document.getElementById("uKyc").value=u.kyc;
+}
+function saveUser(id){ return toast("Admin user update endpoint is not defined in the current backend contract."); }
+function suspendUser(id){ return toast("Admin user suspension endpoint is not defined in the current backend contract."); }
+function openUserCreate(){ return toast("Admin user creation endpoint is not defined in the current backend contract."); }
+function createUser(){ return toast("Admin user creation endpoint is not defined in the current backend contract."); }
+
+/* ========== KYC Verification Workflow (detailed) ==========
+   Customer journey (7): Personal → PAN → Bank → IPV → eSign → Nominee → Submit
+   Admin review (7): Personal → PAN → Bank → IPV → eSign → Nominee → Final decision
+*/
+const KYC_REVIEW_STEPS = ["Personal","PAN / ID","Bank","IPV","eSign","Nominee","Final"];
+function kycCheckTag(v){
+  if(v==="PASS") return `<span class="tag good">PASS</span>`;
+  if(v==="FAIL") return `<span class="tag bad">FAIL</span>`;
+  if(v==="SKIP") return `<span class="tag muted">SKIP</span>`;
+  return `<span class="tag warn">PENDING</span>`;
+}
+function kyc(){
+  const pending=state.kycQueue.filter(x=>x.status==="PENDING"||x.status==="IN_REVIEW").length;
+  document.getElementById("app").innerHTML =
+    head("KYC Verification","Customer submit → checklist review → approve / reject",
+      `<span class="tag warn">${pending} in queue</span><button class="btn" onclick="render()">Refresh</button>`) +
+    banner() +
+    `<div class="card" style="margin-bottom:14px">
+      <h2 style="margin:0 0 8px;font-size:14px">Workflow map</h2>
+      <div class="stepper">
+        <span class="step-pill done">1. Customer KYC (7 steps)</span>
+        <span class="step-pill done">2. Submit application</span>
+        <span class="step-pill current">3. Admin checklist review</span>
+        <span class="step-pill">4. Approve / Reject</span>
+        <span class="step-pill">5. Account activation</span>
+      </div>
+      <p class="muted" style="margin:8px 0 0">Admin must verify each evidence block. Final approve is allowed only when mandatory checks are PASS (or SKIP for nominee N/A).</p>
+    </div>
+    <div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>ID</th><th>Customer</th><th>Account</th><th>Review step</th><th>Risk</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>
+      <tbody>${state.kycQueue.map(k=>{
+        const stepLabel = KYC_REVIEW_STEPS[(k.reviewStep||1)-1] || "—";
+        return `<tr>
+          <td>${k.id}</td>
+          <td><strong>${k.name}</strong></td>
+          <td>${k.account||"—"}</td>
+          <td>${k.reviewStep||1}/7 · ${stepLabel}</td>
+          <td><span class="tag ${k.risk==="HIGH"?"bad":"good"}">${k.risk}</span></td>
+          <td><span class="tag ${k.status==="APPROVED"?"good":k.status==="REJECTED"?"bad":"warn"}">${k.status}</span></td>
+          <td>${k.submitted}</td>
+          <td><button class="btn primary" onclick="kycOpen('${k.id}')">Open verification</button></td>
+        </tr>`;
+      }).join("")||`<tr><td colspan="8"><div class="empty">Queue empty</div></td></tr>`}</tbody>
+    </table></div></div>`;
+}
+
+function kycOpen(id){
+  const k=state.kycQueue.find(x=>x.id===id); if(!k) return;
+  // Full-page style review inside app content for detail
+  state._kycOpenId=id;
+  if(k.status==="PENDING"){ k.status="IN_REVIEW"; k.history=k.history||[]; k.history.push({ time:new Date().toLocaleString("en-IN"), event:"REVIEW_STARTED", by:"ops@tredin" }); save(); }
+  kycRenderDetail(id);
+}
+function kycRenderDetail(id){
+  const k=state.kycQueue.find(x=>x.id===id); if(!k) return go("kyc");
+  const step=Math.max(1, Math.min(7, k.reviewStep||1));
+  const checks=k.checks||{};
+  const locked = k.status==="APPROVED"||k.status==="REJECTED";
+
+  let body="";
+  if(step===1){
+    const p=k.personal||{};
+    body=`<div class="card"><h2>1. Personal details verification</h2>
+      <p class="muted">Match name, DOB, address and contact with application.</p>
+      <div class="tablewrap"><table class="table"><tbody>
+        <tr><td class="muted">Full name</td><td><strong>${k.name}</strong></td></tr>
+        <tr><td class="muted">DOB</td><td>${p.dob||"—"}</td></tr>
+        <tr><td class="muted">Address</td><td>${p.address||"—"}, ${p.city||""} ${p.pin||""}</td></tr>
+        <tr><td class="muted">Mobile</td><td>${p.mobile||"—"}</td></tr>
+        <tr><td class="muted">Email</td><td>${p.email||"—"}</td></tr>
+      </tbody></table></div>
+      <div class="section row">
+        <span>Check: ${kycCheckTag(checks.personal)}</span>
+        ${!locked?`<button class="btn good" onclick="kycSetCheck('${id}','personal','PASS')">Mark PASS</button>
+        <button class="btn danger" onclick="kycSetCheck('${id}','personal','FAIL')">Mark FAIL</button>`:""}
+      </div></div>`;
+  }
+  if(step===2){
+    const p=k.pan||{};
+    body=`<div class="card"><h2>2. PAN / Identity verification</h2>
+      <p class="muted">Validate PAN format, name match and document quality.</p>
+      <div class="tablewrap"><table class="table"><tbody>
+        <tr><td class="muted">PAN</td><td><strong>${p.number||"—"}</strong></td></tr>
+        <tr><td class="muted">Name on PAN</td><td>${p.nameOnPan||"—"}</td></tr>
+        <tr><td class="muted">KYC mode</td><td>${p.mode||"—"}</td></tr>
+        <tr><td class="muted">Name match</td><td><span class="tag ${p.match?"good":"bad"}">${p.match?"MATCH":"MISMATCH"}</span></td></tr>
+        <tr><td class="muted">Document</td><td>${p.doc||"—"}</td></tr>
+      </tbody></table></div>
+      <div class="section row">
+        <span>Check: ${kycCheckTag(checks.pan)}</span>
+        ${!locked?`<button class="btn good" onclick="kycSetCheck('${id}','pan','PASS')">Mark PASS</button>
+        <button class="btn danger" onclick="kycSetCheck('${id}','pan','FAIL')">Mark FAIL</button>`:""}
+      </div></div>`;
+  }
+  if(step===3){
+    const b=k.bank||{};
+    body=`<div class="card"><h2>3. Bank verification</h2>
+      <p class="muted">Confirm account holder, IFSC and verification method.</p>
+      <div class="tablewrap"><table class="table"><tbody>
+        <tr><td class="muted">Bank</td><td><strong>${b.name||"—"}</strong></td></tr>
+        <tr><td class="muted">Account</td><td>${b.account||"—"}</td></tr>
+        <tr><td class="muted">IFSC</td><td>${b.ifsc||"—"}</td></tr>
+        <tr><td class="muted">Holder</td><td>${b.holder||"—"}</td></tr>
+        <tr><td class="muted">Method</td><td>${b.mode||"—"}</td></tr>
+        <tr><td class="muted">Penny / API verified</td><td><span class="tag ${b.verified?"good":"warn"}">${b.verified?"YES":"NO"}</span></td></tr>
+      </tbody></table></div>
+      <div class="section row">
+        <span>Check: ${kycCheckTag(checks.bank)}</span>
+        ${!locked?`<button class="btn good" onclick="kycSetCheck('${id}','bank','PASS')">Mark PASS</button>
+        <button class="btn danger" onclick="kycSetCheck('${id}','bank','FAIL')">Mark FAIL</button>`:""}
+      </div></div>`;
+  }
+  if(step===4){
+    const v=k.ipv||{};
+    body=`<div class="card"><h2>4. IPV — In-person / video verification</h2>
+      <p class="muted">Confirm identity verification was completed by approved process.</p>
+      <div class="tablewrap"><table class="table"><tbody>
+        <tr><td class="muted">IPV done</td><td><span class="tag ${v.done?"good":"bad"}">${v.done?"YES":"NO"}</span></td></tr>
+        <tr><td class="muted">Method</td><td>${v.method||"—"}</td></tr>
+        <tr><td class="muted">Time</td><td>${v.time||"—"}</td></tr>
+      </tbody></table></div>
+      <div class="section row">
+        <span>Check: ${kycCheckTag(checks.ipv)}</span>
+        ${!locked?`<button class="btn good" onclick="kycSetCheck('${id}','ipv','PASS')">Mark PASS</button>
+        <button class="btn danger" onclick="kycSetCheck('${id}','ipv','FAIL')">Mark FAIL</button>`:""}
+      </div></div>`;
+  }
+  if(step===5){
+    const e=k.esign||{};
+    body=`<div class="card"><h2>5. eSign consent</h2>
+      <p class="muted">Account opening documents consent / eSign status.</p>
+      <div class="tablewrap"><table class="table"><tbody>
+        <tr><td class="muted">Consent</td><td><span class="tag ${e.consent?"good":"bad"}">${e.consent?"CAPTURED":"MISSING"}</span></td></tr>
+        <tr><td class="muted">Time</td><td>${e.time||"—"}</td></tr>
+      </tbody></table></div>
+      <div class="section row">
+        <span>Check: ${kycCheckTag(checks.esign)}</span>
+        ${!locked?`<button class="btn good" onclick="kycSetCheck('${id}','esign','PASS')">Mark PASS</button>
+        <button class="btn danger" onclick="kycSetCheck('${id}','esign','FAIL')">Mark FAIL</button>`:""}
+      </div></div>`;
+  }
+  if(step===6){
+    const n=k.nominee||{};
+    body=`<div class="card"><h2>6. Nominee</h2>
+      <p class="muted">Nominee is optional if customer selected N/A.</p>
+      <div class="tablewrap"><table class="table"><tbody>
+        <tr><td class="muted">Status</td><td>${n.na?"Not opted":"Declared"}</td></tr>
+        <tr><td class="muted">Name</td><td>${n.na?"—":(n.name||"—")}</td></tr>
+        <tr><td class="muted">Relationship</td><td>${n.na?"—":(n.relationship||"—")}</td></tr>
+        <tr><td class="muted">Share %</td><td>${n.na?"—":(n.share??"—")}</td></tr>
+      </tbody></table></div>
+      <div class="section row">
+        <span>Check: ${kycCheckTag(checks.nominee)}</span>
+        ${!locked?`<button class="btn good" onclick="kycSetCheck('${id}','nominee','PASS')">Mark PASS</button>
+        <button class="btn" onclick="kycSetCheck('${id}','nominee','SKIP')">Skip (N/A)</button>
+        <button class="btn danger" onclick="kycSetCheck('${id}','nominee','FAIL')">Mark FAIL</button>`:""}
+      </div></div>`;
+  }
+  if(step===7){
+    const mandatory=["personal","pan","bank","ipv","esign"];
+    const ready=mandatory.every(c=>checks[c]==="PASS") && (checks.nominee==="PASS"||checks.nominee==="SKIP");
+    const anyFail=Object.values(checks).some(v=>v==="FAIL");
+    body=`<div class="card"><h2>7. Final decision</h2>
+      <p class="muted">Approve only if all mandatory checks PASS. Reject if any FAIL or policy breach.</p>
+      <div class="tablewrap"><table class="table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+        ${[["Personal","personal"],["PAN / ID","pan"],["Bank","bank"],["IPV","ipv"],["eSign","esign"],["Nominee","nominee"]].map(([l,c])=>
+          `<tr><td>${l}</td><td>${kycCheckTag(checks[c])}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="field section"><label>Reviewer note ${anyFail||!ready?"(required for reject)":"(optional)"}</label>
+        <textarea id="kycFinalNote" placeholder="Reason / remarks">${k.note||""}</textarea>
+      </div>
+      <p>${ready?`<span class="tag good">READY TO APPROVE</span>`:`<span class="tag warn">COMPLETE CHECKS FIRST</span>`}
+         ${anyFail?` <span class="tag bad">FAILURES PRESENT</span>`:""}</p>
+      ${!locked?`<div class="section row">
+        <button class="btn good" disabled>Approve & activate · API contract pending</button>
+        <button class="btn danger" disabled>Reject application · API contract pending</button>
+      </div>`:`<p class="section"><span class="tag ${k.status==="APPROVED"?"good":"bad"}">${k.status}</span> · Decision already recorded.</p>`}
+      </div>`;
+  }
+
+  document.getElementById("app").innerHTML =
+    head(`KYC · ${k.id}`, `${k.name} · ${k.account||""} · Risk ${k.risk}`,
+      `<button class="btn" onclick="go('kyc')">← Queue</button>`) +
+    banner() +
+    `<div class="stepper">${KYC_REVIEW_STEPS.map((label,i)=>{
+      const n=i+1;
+      const cls = n===step?"current":(n<step||(checks[["personal","pan","bank","ipv","esign","nominee"][i]]==="PASS"||checks[["personal","pan","bank","ipv","esign","nominee"][i]]==="SKIP")?"done":"");
+      return `<button type="button" class="step-pill ${cls}" onclick="kycGoStep('${id}',${n})" ${locked&&n>step?"":""}>${n}. ${label}</button>`;
+    }).join("")}</div>
+    <div class="row" style="margin-bottom:12px">
+      <span class="tag ${k.status==="APPROVED"?"good":k.status==="REJECTED"?"bad":"warn"}">${k.status}</span>
+      <span class="tag">Review step ${step}/7</span>
+      <span class="tag ${k.risk==="HIGH"?"bad":"good"}">Risk ${k.risk}</span>
+    </div>
+    ${body}
+    <div class="section row">
+      <button class="btn" ${step<=1?"disabled":""} onclick="kycGoStep('${id}',${step-1})">Back</button>
+      <button class="btn primary" ${step>=7?"disabled":""} onclick="kycGoStep('${id}',${step+1})">Next</button>
+    </div>
+    <div class="section card">
+      <h2>Application history</h2>
+      <div class="tablewrap"><table class="table"><thead><tr><th>Time</th><th>Event</th><th>By</th></tr></thead>
+      <tbody>${(k.history||[]).slice().reverse().map(h=>`<tr><td>${h.time}</td><td>${h.event}</td><td>${h.by}</td></tr>`).join("")||`<tr><td colspan="3" class="muted">No history</td></tr>`}</tbody></table></div>
+    </div>`;
+}
+function kycGoStep(id, n){
+  const k=state.kycQueue.find(x=>x.id===id); if(!k) return;
+  k.reviewStep=Math.max(1,Math.min(7,n));
+  kycRenderDetail(id);
+}
+function kycSetCheck(id, key, value){ return toast("KYC review-check API is not configured in the current backend contract. No local review decision was recorded."); }
+function kycFinal(id, status){
+  const k=state.kycQueue.find(x=>x.id===id); if(!k) return;
+  return toast("KYC approve/reject endpoint is not defined in the current backend contract.");
+  const note=(document.getElementById("kycFinalNote")?.value||"").trim();
+  if(status==="REJECTED" && note.length<3) return toast("Enter reject reason in reviewer note");
+  if(window.__adminBusy) return; window.__adminBusy=true;
+  const action = status==="APPROVED" ? "approve" : "reject";
+  tredinAdminCall(() => window.TREDIN_API.request(`/kyc/${encodeURIComponent(id)}/${action}`, {method:"POST",body:JSON.stringify({note})}), "Submitting KYC decision…")
+    .then(r=>{ if(r?.data) state.kycQueue = Array.isArray(r.data) ? r.data : (r.data.queue || state.kycQueue); toast("KYC decision submitted."); go("kyc"); })
+    .catch(e=>toast(e.message||"KYC action failed."))
+    .finally(()=>window.__adminBusy=false);
+}
+function tredinAdminCall(fn, text){ if(text) toast(text); return Promise.resolve().then(fn); }
+
+/* Orders */
+function orderStatusTag(status){
+  const cls=status==="FILLED"?"good":status==="REJECTED"||status==="CANCELLED"?"bad":"warn";
+  return `<span class="tag ${cls}">${status}</span>`;
+}
+function orderRows(list){
+  return list.map(o=>`<tr>
+    <td><strong>${o.id}</strong></td><td>${o.account}</td><td><strong>${o.symbol}</strong></td>
+    <td><span class="order-side ${o.side==="BUY"?"buy":"sell"}">${o.side}</span></td>
+    <td>${o.qty}</td><td>${money(o.price)}</td><td>${orderStatusTag(o.status)}</td><td>${o.time}</td>
+    <td><button class="btn" onclick="orderDetail('${o.id}')">View</button></td>
+  </tr>`).join("")||`<tr><td colspan="9"><div class="empty">No orders</div></td></tr>`;
+}
+function orders(){
+  const open=state.orders.filter(o=>o.status==="OPEN").length;
+  const filled=state.orders.filter(o=>o.status==="FILLED").length;
+  const rejected=state.orders.filter(o=>o.status==="REJECTED").length;
+  document.getElementById("app").innerHTML =
+    head("Orders","Exchange-bound order monitor",`<span class="tag warn">${open} open</span>`) + banner() +
+    `<div class="ops-summary">
+      <div class="ops-stat"><span>Open</span><strong>${open}</strong></div>
+      <div class="ops-stat"><span>Filled</span><strong>${filled}</strong></div>
+      <div class="ops-stat"><span>Rejected</span><strong>${rejected}</strong></div>
+    </div>
+    <div class="filters">
+      <select id="ordStatus" onchange="filterOrders()"><option value="">All status</option><option>OPEN</option><option>FILLED</option><option>REJECTED</option><option>CANCELLED</option></select>
+    </div>
+    <div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Order</th><th>Account</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th><th>Status</th><th>Time</th><th></th></tr></thead>
+      <tbody id="ordRows">${orderRows(state.orders)}</tbody>
+    </table></div></div>`;
+}
+function filterOrders(){
+  const st=document.getElementById("ordStatus")?.value||"";
+  const list=state.orders.filter(o=>!st||o.status===st);
+  const el=document.getElementById("ordRows"); if(el) el.innerHTML=orderRows(list);
+}
+function orderDetail(id){
+  const o=state.orders.find(x=>x.id===id); if(!o) return;
+  const value=o.qty*o.price;
+  const isOpen=o.status==="OPEN";
+  const steps=["REVIEW","RMS","ACCEPTED","EXCHANGE ACK","OPEN","FILLED"];
+  const idx=o.status==="FILLED"?5:o.status==="OPEN"?4:o.status==="REJECTED"?2:0;
+  const rail=steps.map((x,i)=>`<div class="workflow-step ${o.status==="REJECTED"&&i===idx?"failed":i<idx?"done":i===idx?"active":""}"><b>${i+1}</b>${x}</div>`).join("");
+  openModal(`<div class="modalhead"><h2>${o.id}</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="workflow-rail">${rail}</div>
+    <div class="ops-detail">
+      <div class="confirm-box">
+        <div class="row"><span class="order-side ${o.side==="BUY"?"buy":"sell"}">${o.side}</span>${orderStatusTag(o.status)}</div>
+        <h3 style="margin:12px 0 4px;font-size:22px">${o.symbol}</h3>
+        <div class="muted">${o.qty} units · ${money(o.price)} / unit</div>
+        <div class="ops-summary" style="margin-bottom:0">
+          <div class="ops-stat"><span>Order value</span><strong>${money(value)}</strong></div>
+          <div class="ops-stat"><span>Account</span><strong style="font-size:13px">${o.account}</strong></div>
+          <div class="ops-stat"><span>Submitted</span><strong style="font-size:13px">${o.time}</strong></div>
+        </div>
+      </div>
+      <div class="confirm-box">
+        <strong>Execution control</strong>
+        <p class="muted">Admin action requires backend authorization, RMS and exchange integration.</p>
+        ${o.reason?`<p><span class="tag bad severity">REJECT REASON</span> ${o.reason}</p>`:""}
+        ${isOpen?`<div class="action-strip"><span><strong>Open order</strong><br><small class="muted">Force cancel requires confirmation.</small></span><button class="btn danger" onclick="confirmCancelOrder('${o.id}')">Force cancel</button></div>`:`<p class="muted">No destructive action available for this status.</p>`}
+      </div>
+    </div>
+    <div class="section row"><button class="btn" onclick="closeModal()">Close</button></div>`);
+}
+function confirmCancelOrder(id){
+  const o=state.orders.find(x=>x.id===id); if(!o||o.status!=="OPEN") return;
+  openModal(`<div class="modalhead"><h2>Confirm force cancel</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="confirm-box"><span class="order-side sell">CANCEL</span><h3 style="margin:10px 0 4px">${o.id} · ${o.symbol}</h3>
+    <p>Cancel <strong>${o.qty}</strong> units for account <strong>${o.account}</strong>?</p>
+    <p class="muted">This action requires server-side authorization and exchange confirmation.</p></div>
+    <div class="section row"><button class="btn danger" onclick="forceCancelOrder('${id}')">Confirm cancel</button><button class="btn" onclick="orderDetail('${id}')">Back</button></div>`);
+}
+function requireConfirmAction(title, message, confirmText, tone, action){
+  openModal(`<div class="modalhead"><h2>${title}</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="confirm-box"><span class="tag ${tone||"warn"}">CONFIRMATION REQUIRED</span><p style="margin:10px 0 0">${message}</p></div>
+    <div class="section row"><button class="btn ${tone==="bad"?"danger":tone==="good"?"good":"primary"}" onclick="${action}">${confirmText}</button><button class="btn" onclick="closeModal()">Back</button></div>`);
+}
+
+function forceCancelOrder(id){
+  if(window.__adminBusy) return;
+  const o=state.orders.find(x=>x.id===id);
+  if(!o || o.status!=="OPEN") return toast("Order is no longer open.");
+  if(!window.TREDIN_API?.orders?.cancel) return toast("Order cancel API is not configured.");
+  window.__adminBusy=true;
+  tredinAdminCall(()=>window.TREDIN_API.orders.cancel(id),"Submitting cancellation…")
+    .then(r=>{ if(r?.data) { const updated=r.data.order||r.data; state.orders=state.orders.map(x=>x.id===id?updated:x); } closeModal(); toast("Cancellation submitted to backend."); render(); })
+    .catch(e=>toast(e?.message||"Order cancellation failed."))
+    .finally(()=>window.__adminBusy=false);
+}
+
+function positions(){
+  document.getElementById("app").innerHTML =
+    head("Positions","Open risk across accounts") + banner() +
+    `<div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>ID</th><th>Account</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Avg</th><th>Mark</th><th>P&L</th></tr></thead>
+      <tbody>${state.positions.map(p=>`<tr>
+        <td>${p.id}</td><td>${p.account}</td><td><strong>${p.symbol}</strong></td><td>${p.side}</td>
+        <td>${p.qty}</td><td>${money(p.avg)}</td><td>${money(p.mark)}</td>
+        <td class="${p.pnl>=0?"positive":"negative"}">${money(p.pnl)}</td>
+      </tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+
+function instruments(){
+  document.getElementById("app").innerHTML =
+    head("Instruments","Contract master",`<button class="btn primary" onclick="addInstrument()">Add</button>`) + banner() +
+    `<div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Symbol</th><th>Segment</th><th>Exchange</th><th>Lot</th><th>Tick</th><th>Status</th><th></th></tr></thead>
+      <tbody>${state.instruments.map(i=>`<tr>
+        <td><strong>${i.id}</strong></td><td>${i.segment}</td><td>${i.exchange}</td><td>${i.lot}</td><td>${i.tick}</td>
+        <td><span class="tag ${i.status==="ACTIVE"?"good":"muted"}">${i.status}</span></td>
+        <td><button class="btn" onclick="toggleInstrument('${i.id}')">${i.status==="ACTIVE"?"Disable":"Enable"}</button></td>
+      </tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+function toggleInstrument(id){ return toast("Instrument status API is not configured in the current backend contract. No local change was made."); }
+function addInstrument(){ return toast("Instrument master API is not configured."); }
+function saveInstrument(){ return toast("Instrument master API is not configured. No local instrument will be created."); }
+
+/* Money workflows */
+function moneyActionTag(status, type){
+  const cls=status==="CREDITED"||status==="PAID"?"good":status==="REJECTED"?"bad":"warn";
+  return `<span class="tag ${cls}">${status}</span>`;
+}
+function deposits(){
+  const pending=state.deposits.filter(d=>d.status==="PENDING").length;
+  document.getElementById("app").innerHTML =
+    head("Deposits","Pay-in queue · read-only until approval contract is defined",`<span class="tag warn">${pending} pending</span>`) + banner() +
+    `<div class="card money-action"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Ref</th><th>Account</th><th>Amount</th><th>Method</th><th>Status</th><th>Time</th><th>Action</th></tr></thead>
+      <tbody>${state.deposits.map(d=>`<tr>
+        <td><strong>${d.id}</strong></td><td>${d.account}</td><td><strong>${money(d.amount)}</strong></td><td>${d.method}</td>
+        <td>${moneyActionTag(d.status)}</td><td>${d.time}</td>
+        <td>${d.status==="PENDING"?`<button class="btn" disabled>Approval API pending</button>`:`—`}</td>
+      </tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+function confirmDeposit(id,status){
+  const d=state.deposits.find(x=>x.id===id); if(!d||d.status!=="PENDING") return;
+  openModal(`<div class="modalhead"><h2>Confirm deposit action</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="confirm-box"><span class="tag ${status==="CREDITED"?"good":"bad"}">${status}</span>
+      <h3 style="margin:10px 0 4px">${d.id} · ${money(d.amount)}</h3>
+      <p>Account <strong>${d.account}</strong> · ${d.method}</p>
+      <p class="muted">Financial action requires server-side ledger authorization and confirmation.</p></div>
+    <div class="section row"><button class="btn ${status==="CREDITED"?"good":"danger"}" onclick="depAction('${id}','${status}')">Confirm ${status==="CREDITED"?"credit":"reject"}</button><button class="btn" onclick="closeModal()">Back</button></div>`);
+}
+function depAction(id, status){
+  if(window.__adminBusy) return;
+  return toast("Admin deposit approval endpoint is not defined in the current backend contract.");
+  const d=state.deposits.find(x=>x.id===id); if(!d) return; window.__adminBusy=true;
+  tredinAdminCall(() => window.TREDIN_API.request(`/funds/deposit/${encodeURIComponent(id)}/${status.toLowerCase()}`,{method:"POST"}),"Submitting deposit decision…")
+    .then(r=>{ if(r?.data?.deposits) state.deposits=r.data.deposits; if(r?.data?.ledger) state.ledger=r.data.ledger; toast("Deposit decision submitted."); render(); })
+    .catch(e=>toast(e.message||"Deposit action failed."))
+    .finally(()=>window.__adminBusy=false);
+}
+
+function withdrawals(){
+  const pending=state.withdrawals.filter(w=>w.status==="PENDING").length;
+  document.getElementById("app").innerHTML =
+    head("Withdrawals","Payout queue · read-only until approval contract is defined",`<span class="tag warn">${pending} pending</span>`) + banner() +
+    `<div class="card money-action"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Ref</th><th>Account</th><th>Amount</th><th>Bank</th><th>Status</th><th>Time</th><th>Action</th></tr></thead>
+      <tbody>${state.withdrawals.map(w=>`<tr>
+        <td><strong>${w.id}</strong></td><td>${w.account}</td><td><strong>${money(w.amount)}</strong></td><td>${w.bank}</td>
+        <td>${moneyActionTag(w.status)}</td><td>${w.time}</td>
+        <td>${w.status==="PENDING"?`<button class="btn" disabled>Payout API pending</button>`:`—`}</td>
+      </tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+function confirmWithdrawal(id,status){
+  const w=state.withdrawals.find(x=>x.id===id); if(!w||w.status!=="PENDING") return;
+  const u=state.users.find(x=>x.account===w.account);
+  const enough=!!u && Number(u.balance)>=Number(w.amount);
+  openModal(`<div class="modalhead"><h2>Confirm withdrawal action</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="confirm-box"><span class="tag ${status==="PAID"?"good":"bad"}">${status}</span>
+      <h3 style="margin:10px 0 4px">${w.id} · ${money(w.amount)}</h3>
+      <p>Account <strong>${w.account}</strong> · ${w.bank}</p>
+      ${status==="PAID"?`<p class="muted">Payment eligibility, available funds, limits and ledger authorization are verified by the backend.</p>`:`<p class="muted">Financial action requires server-side ledger authorization and confirmation.</p>`}
+    </div>
+    <div class="section row">${status==="PAID"||status==="REJECTED"?`<button class="btn ${status==="PAID"?"good":"danger"}" onclick="wdAction('${id}','${status}')">Confirm ${status==="PAID"?"payment":"reject"}</button>`:""}<button class="btn" onclick="closeModal()">Back</button></div>`);
+}
+function wdAction(id, status){
+  if(window.__adminBusy) return;
+  return toast("Admin withdrawal approval endpoint is not defined in the current backend contract.");
+  const w=state.withdrawals.find(x=>x.id===id); if(!w) return; window.__adminBusy=true;
+  tredinAdminCall(() => window.TREDIN_API.request(`/funds/withdraw/${encodeURIComponent(id)}/${status.toLowerCase()}`,{method:"POST"}),"Submitting withdrawal decision…")
+    .then(r=>{ if(r?.data?.withdrawals) state.withdrawals=r.data.withdrawals; if(r?.data?.ledger) state.ledger=r.data.ledger; toast("Withdrawal decision submitted."); render(); })
+    .catch(e=>toast(e.message||"Withdrawal action failed."))
+    .finally(()=>window.__adminBusy=false);
+}
+
+function ledger(){
+  document.getElementById("app").innerHTML =
+    head("Ledger","Admin-visible money movements") + banner() +
+    `<div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Time</th><th>Type</th><th>Account</th><th>Amount</th><th>Note</th></tr></thead>
+      <tbody>${state.ledger.map(l=>`<tr>
+        <td>${l.time}</td><td>${l.type}</td><td>${l.account}</td>
+        <td class="${l.amount>=0?"positive":"negative"}">${money(l.amount)}</td><td>${l.note}</td>
+      </tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+
+function support(){
+  document.getElementById("app").innerHTML =
+    head("Support","Tickets & grievances",`<button class="btn primary" onclick="newTicket()">New ticket</button>`) + banner() +
+    `<div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>ID</th><th>Account</th><th>Category</th><th>Priority</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>${state.tickets.map(t=>`<tr>
+        <td>${t.id}</td><td>${t.account}</td><td>${t.category}</td>
+        <td><span class="tag ${t.priority==="High"?"bad":"muted"}">${t.priority}</span></td>
+        <td>${t.subject}</td>
+        <td><span class="tag ${t.status==="OPEN"?"warn":"good"}">${t.status}</span></td>
+        <td><button class="btn" onclick="ticketAction('${t.id}')">Update</button></td>
+      </tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+function ticketAction(id){
+  const t=state.tickets.find(x=>x.id===id); if(!t) return;
+  openModal(`<div class="modalhead"><h2>${t.id}</h2><button class="close" onclick="closeModal()">×</button></div>
+    <p>${t.subject}</p>
+    <div class="field"><label>Status</label>
+      <select id="tStatus"><option>OPEN</option><option>IN_PROGRESS</option><option>CLOSED</option></select>
+    </div>
+    <div class="section"><button class="btn primary" onclick="saveTicket('${t.id}')">Save</button></div>`);
+  document.getElementById("tStatus").value=t.status;
+}
+function saveTicket(id){ return toast("Support ticket update API is not configured. No local ticket mutation was made."); }
+function newTicket(){
+  openModal(`<div class="modalhead"><h2>New ticket</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="formgrid">
+      <div class="field"><label>Account</label><input id="tAcc" placeholder="TDN-..."></div>
+      <div class="field"><label>Category</label><select id="tCat"><option>Trading</option><option>Funds</option><option>KYC</option><option>Other</option></select></div>
+      <div class="field" style="grid-column:1/-1"><label>Subject</label><input id="tSub"></div>
+    </div>
+    <div class="section"><button class="btn primary" onclick="createTicket()">Create</button></div>`);
+}
+function createTicket(){ return toast("Support ticket API is not configured."); }
+
+function risk(){
+  const gross=state.positions.reduce((a,p)=>a+Math.abs(p.pnl),0);
+  const openNotional=state.positions.reduce((a,p)=>a+p.qty*p.mark,0);
+  const openOrders=state.orders.filter(o=>o.status==="OPEN");
+  const maxOrder=Number(state.settings.maxOrderValue||0);
+  const oversized=openOrders.filter(o=>o.qty*o.price>maxOrder);
+  const concentration=Object.entries(state.positions.reduce((m,p)=>{m[p.symbol]=m[p.symbol]||{c:new Set(),q:0,n:0};m[p.symbol].c.add(p.account);m[p.symbol].q+=p.qty;m[p.symbol].n+=p.qty*p.mark;return m;},{})).sort((a,b)=>b[1].n-a[1].n);
+  const riskState=oversized.length?"BLOCK":state.settings.tradingEnabled?"PASS":"WARN";
+  document.getElementById("app").innerHTML =
+    head("Risk Monitor","Exposure and control checks",`<span class="tag ${riskState==="PASS"?"good":riskState==="BLOCK"?"bad":"warn"} severity">${riskState}</span>`) + banner() +
+    `<div class="grid g4">
+      ${kpi("Open positions", state.positions.length)}
+      ${kpi("Gross |P&L|", money(gross))}
+      ${kpi("Mark notional", money(openNotional))}
+      ${kpi("RMS mode", state.settings.rmsMode, "Settings")}
+    </div>
+    <div class="section grid g2">
+      <div class="card ${oversized.length?"risk-critical":""}">
+        <h2>Control checks</h2>
+        <p>Trading <strong>${state.settings.tradingEnabled?"enabled":"disabled"}</strong> <span class="tag ${state.settings.tradingEnabled?"good":"bad"}">${state.settings.tradingEnabled?"PASS":"BLOCK"}</span></p>
+        <p>Maintenance <strong>${state.settings.maintenance?"ON":"OFF"}</strong> <span class="tag ${state.settings.maintenance?"warn":"good"}">${state.settings.maintenance?"WARN":"PASS"}</span></p>
+        <p>Signup <strong>${state.settings.newSignup?"open":"closed"}</strong> <span class="tag ${state.settings.newSignup?"good":"muted"}">${state.settings.newSignup?"PASS":"OFF"}</span></p>
+        <p>KYC gate <strong>active</strong> <span class="tag good">PASS</span></p>
+        <p>Withdrawal review <strong>required</strong> <span class="tag good">PASS</span></p>
+        <p>Order value limit <strong>${money(maxOrder)}</strong> <span class="tag ${oversized.length?"bad":"good"}">${oversized.length?oversized.length+" BLOCK":"PASS"}</span></p>
+      </div>
+      <div class="card ${concentration.length&&concentration[0][1].n>openNotional*.7?"risk-warn":""}">
+        <h2>Concentration</h2>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Symbol</th><th>Accounts</th><th>Qty</th><th>Notional</th></tr></thead>
+        <tbody>${concentration.map(([sym,v])=>`<tr><td><strong>${sym}</strong></td><td>${v.c.size}</td><td>${v.q}</td><td>${money(v.n)}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">No positions</td></tr>`}</tbody></table></div>
+      </div>
+    </div>
+    <div class="section card">
+      <h2>Open-order exposure</h2>
+      ${openOrders.length?`<div class="tablewrap"><table class="table"><thead><tr><th>Order</th><th>Symbol</th><th>Side</th><th>Value</th><th>RMS</th></tr></thead><tbody>
+        ${openOrders.map(o=>{const v=o.qty*o.price,blocked=v>maxOrder;return `<tr><td>${o.id}</td><td>${o.symbol}</td><td><span class="order-side ${o.side==="BUY"?"buy":"sell"}">${o.side}</span></td><td>${money(v)}</td><td><span class="tag ${blocked?"bad":"good"}">${blocked?"BLOCK":"PASS"}</span></td></tr>`}).join("")}
+      </tbody></table></div>`:`<div class="empty">No open orders requiring RMS review.</div>`}
+    </div>`;
+}
+
+function auditPage(){
+  document.getElementById("app").innerHTML =
+    head("Audit Log","Backend-authoritative event stream") + banner() +
+    `<div class="card"><div class="tablewrap"><table class="table">
+      <thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Detail</th></tr></thead>
+      <tbody>${state.audit.map(a=>`<tr><td>${a.time}</td><td>${a.actor}</td><td>${a.event}</td><td>${a.detail}</td></tr>`).join("")}</tbody>
+    </table></div></div>`;
+}
+
+function settings(){
+  const s=state.settings;
+  document.getElementById("app").innerHTML =
+    head("Settings","Platform controls") + banner() +
+    `<div class="card auth-card">
+      <div class="formgrid">
+        <div class="field"><label>Maintenance mode</label>
+          <select id="sMaint"><option value="false" ${!s.maintenance?"selected":""}>Off</option><option value="true" ${s.maintenance?"selected":""}>On</option></select>
+        </div>
+        <div class="field"><label>Trading enabled</label>
+          <select id="sTrade"><option value="true" ${s.tradingEnabled?"selected":""}>Yes</option><option value="false" ${!s.tradingEnabled?"selected":""}>No</option></select>
+        </div>
+        <div class="field"><label>New signup</label>
+          <select id="sSign"><option value="true" ${s.newSignup?"selected":""}>Open</option><option value="false" ${!s.newSignup?"selected":""}>Closed</option></select>
+        </div>
+        <div class="field"><label>RMS mode</label>
+          <select id="sRms"><option>STRICT</option><option>STANDARD</option><option>RELAXED</option></select>
+        </div>
+        <div class="field"><label>Max order value</label><input id="sMax" type="number" value="${s.maxOrderValue}"></div>
+        <div class="field"><label>Support email</label><input id="sEmail" value="${s.supportEmail}"></div>
+      </div>
+      <div class="section"><button class="btn primary" onclick="saveSettings()">Save settings</button></div>
+    </div>`;
+  document.getElementById("sRms").value=s.rmsMode;
+}
+function saveSettings(){ return toast("Platform settings API is not configured. No local settings mutation was made."); }
+
+function reports(){
+  document.getElementById("app").innerHTML =
+    head("Reports","Operational exports") + banner() +
+    `<div class="grid g3">${["User report","KYC report","Order report","Funds report","Risk report","Audit export"].map(r=>`
+      <div class="card"><strong>${r}</strong><p class="muted">Backend report API required; no local report is generated</p>
+      <button class="btn" onclick="genReport('${r}')">Generate</button></div>`).join("")}</div>`;
+}
+function genReport(name){
+  return toast("Report API/export contract is not configured. No local report was generated.");
+}
+
+/* ADMIN ICON SYSTEM */
+function aIcon(n,c){
+ const col=c||"#0b4fcf", d={
+ dashboard:'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+ risk:'<path d="M12 3l7 3v5c0 4-3 7-7 10-4-3-7-6-7-10V6l7-3z"/><path d="m9 12 2 2 4-5"/>',
+ users:'<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.7-3 2.5-4.5 5.5-4.5s4.8 1.5 5.5 4.5"/><circle cx="17" cy="9" r="2"/>',
+ kyc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h4"/><path d="m15 15 1.5 1.5L19 14"/>',
+ support:'<path d="M4 13a8 8 0 0 1 16 0"/><path d="M4 13v4h3v-5H4zM20 13v4h-3v-5h3z"/>',
+ orders:'<path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 11h6M9 15h6"/>',
+ positions:'<path d="M5 18V9M12 18V5M19 18v-7M3 18h18"/>',
+ instruments:'<circle cx="12" cy="12" r="7"/><path d="M12 5v7l4 2"/>',
+ deposits:'<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',
+ withdrawals:'<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>',
+ ledger:'<path d="M5 5h14v14H5z"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+ audit:'<path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a8 8 0 0 0-2.1-1.2L14 3h-4l-.4 2.7a8 8 0 0 0-2.1 1.2l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1c.6.5 1.3.9 2.1 1.2L10 21h4l.4-2.7a8 8 0 0 0 2.1-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>',
+ reports:'<path d="M5 4h14v16H5z"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+ view:'<path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/>',
+ check:'<circle cx="12" cy="12" r="8"/><path d="m8 12 2.5 2.5L16 9"/>',
+ reject:'<circle cx="12" cy="12" r="8"/><path d="m9 9 6 6M15 9l-6 6"/>',
+ edit:'<path d="m5 19 3.5-.8L19 7.7 16.3 5 5.8 15.5z"/>',
+ refresh:'<path d="M20 11a8 8 0 0 0-14-4L4 9M4 13a8 8 0 0 0 14 4l2-2"/>',
+ menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ bell:'<path d="M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4zM10 20h4"/>'
+ };
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(d[n]||d.dashboard)+'</svg>';
+}
+const adminIcons={dashboard:"dashboard",risk:"risk",users:"users",kyc:"kyc",support:"support",orders:"orders",positions:"positions",instruments:"instruments",deposits:"deposits",withdrawals:"withdrawals",ledger:"ledger",audit:"audit",settings:"settings",reports:"reports"};
+function enhanceAdminUI(){
+ document.querySelectorAll(".nav button .ico").forEach(e=>e.innerHTML=aIcon(adminIcons[e.closest("button")?.dataset.route]||"dashboard","#8fb7ff"));
+ document.querySelectorAll(".btn").forEach(b=>{
+   if(b.querySelector(".btn-icon"))return;
+   const t=(b.textContent||"").trim().toLowerCase();let n="dashboard",col="#0b4fcf";
+   if(/refresh/.test(t))n="refresh"; else if(/view|open verification|review/.test(t))n="view";
+   else if(/approve|credit|paid|pass|save|create|generate|enable/.test(t)){n="check";col="#0d8a4a"}
+   else if(/reject|suspend|cancel|disable/.test(t)){n="reject";col="#c92a2a"}
+   else if(/manage|update|edit/.test(t))n="edit";
+   const x=document.createElement("span");x.className="btn-icon";x.innerHTML=aIcon(n,col);b.prepend(x);
+ });
+ const mt=document.querySelector(".mobile-toggle");if(mt)mt.innerHTML=aIcon("menu");
+ const bell=document.querySelector(".top-right .pill");if(bell&&!bell.querySelector(".btn-icon")){const x=document.createElement("span");x.className="btn-icon";x.innerHTML=aIcon("bell");bell.prepend(x)}
+}
+
+function render(){
+  if(!adminLoggedIn()){ adminShowAuth(true); return; }
+  adminShowAuth(false);
+  if(!__hydrating) hydrateAdminState();
+  const r=route();
+  document.querySelectorAll("[data-route]").forEach(b=>b.classList.toggle("active", b.dataset.route===r));
+  const titles={
+    dashboard:["Dashboard","Operations overview"],
+    users:["Users","Customer accounts"],
+    kyc:["KYC Queue","Verification workflow"],
+    orders:["Orders","Order monitor"],
+    positions:["Positions","Open risk"],
+    instruments:["Instruments","Master data"],
+    deposits:["Deposits","Pay-in queue"],
+    withdrawals:["Withdrawals","Payout queue"],
+    ledger:["Ledger","Money movements"],
+    support:["Support","Tickets"],
+    risk:["Risk Monitor","Exposure"],
+    margin:["Margin Limits","Customer trading limits"],
+    audit:["Audit Log","Security events"],
+    settings:["Settings","Controls"],
+    reports:["Reports","Exports"]
+  };
+  const t=titles[r]||titles.dashboard;
+  document.getElementById("topTitle").textContent=t[0];
+  document.getElementById("topSub").textContent=t[1];
+  const pending=state.kycQueue.filter(x=>x.status==="PENDING"||x.status==="IN_REVIEW").length
+    + state.deposits.filter(x=>x.status==="PENDING").length
+    + state.withdrawals.filter(x=>x.status==="PENDING").length
+    + state.tickets.filter(x=>x.status==="OPEN").length;
+  document.getElementById("alertCount").textContent=pending;
+  const pages={ dashboard, users, kyc, orders, positions, instruments, deposits, withdrawals, ledger, support, risk, margin, audit:auditPage, settings, reports };
+  (pages[r]||dashboard)();
+  enhanceAdminUI();
+}
+
+render();
+</script>
+<div id="adminAuthGate" class="modalbg" style="display:none;z-index:9999"><div class="modal auth-card" style="width:min(420px,calc(100vw - 28px))"><div class="page-head"><div><h2>Admin Sign in</h2><div class="sub">Static demo login · no backend required.</div></div><span class="tag gold">DEMO</span></div><div class="formgrid"><div class="field"><label>Admin ID</label><input id="adminAuthId" autocomplete="username" inputmode="numeric" placeholder="Enter Admin ID"></div><div class="field"><label>Password</label><input id="adminAuthPass" type="password" autocomplete="current-password" placeholder="Enter password"></div></div><div id="adminAuthErr" class="ui-state error" style="display:none;margin-top:12px"></div><button class="btn primary" id="adminAuthBtn" style="width:100%;margin-top:14px" onclick="adminAuthSubmit()">Sign in</button><p class="muted" style="margin-top:10px">Static demo mode: this login works on GitHub Pages without a backend. Do not use it for real production security.</p></div></div>
+<script id="tredin-admin-step7-trading-monitor">
+/* STEP 7 — ADMIN LIVE TRADING MONITOR
+   Admin observes server-authoritative orders/positions only. No local fills or status transitions.
+*/
+(function(){
+  window.TREDIN_ADMIN_LIVE = window.TREDIN_ADMIN_LIVE || {ordersReady:false,riskReady:false,realtimeReady:false,lastSync:null,error:null};
+  const unwrap=r=>r&&r.data!=null?r.data:r;
+  const listOf=(d,keys)=>{if(Array.isArray(d))return d;for(const k of keys)if(Array.isArray(d?.[k]))return d[k];return[]};
+  async function refreshTradingMonitor(){
+    if(!window.TREDIN_API?.baseUrl) return;
+    try{
+      const [o,p,r]=await Promise.all([
+        window.TREDIN_API.admin.orders(),
+        window.TREDIN_API.positions.list(),
+        window.TREDIN_API.admin.risk()
+      ]);
+      const od=unwrap(o),pd=unwrap(p),rd=unwrap(r);
+      const orders=listOf(od,['orders','items','results']);
+      const positions=listOf(pd,['positions','items','results']);
+      if(orders.length||Array.isArray(od))state.orders=orders;
+      if(positions.length||Array.isArray(pd))state.positions=positions;
+      if(rd?.positions)state.positions=rd.positions;
+      window.TREDIN_ADMIN_LIVE.ordersReady=true;
+      window.TREDIN_ADMIN_LIVE.riskReady=true;
+      window.TREDIN_ADMIN_LIVE.lastSync=new Date().toISOString();
+      if(typeof render==='function')render();
+    }catch(e){window.TREDIN_ADMIN_LIVE.error=e?.message||'Trading monitor unavailable.';toast(window.TREDIN_ADMIN_LIVE.error)}
+  }
+  window.TREDIN_ADMIN_LIVE.refresh=refreshTradingMonitor;
+  window.TREDIN_ADMIN_LIVE.startRealtime=function(){
+    /* WS/SSE URL + event schema are intentionally not invented until backend contract is supplied. */
+    window.TREDIN_ADMIN_LIVE.realtimeReady=false;
+  };
+  window.adminSimulateFill=function(){toast('Client-side execution simulation is disabled.');};
+  window.adminAdvanceOrder=function(){toast('Order lifecycle is controlled by backend/exchange events.');};
+  refreshTradingMonitor();
+  window.TREDIN_ADMIN_LIVE.startRealtime();
+})();
+</script>
+<script id="tredin-admin-step9-sync">
+/* STEP 9 — ADMIN ↔ BACKEND ↔ CUSTOMER SYNCHRONIZATION
+   Admin is an operations view of server state. Customer data is never bridged
+   through browser storage. Unsupported mutation endpoints remain disabled.
+*/
+(function(){
+  const SYNC=window.TREDIN_ADMIN_SYNC=window.TREDIN_ADMIN_SYNC||{inFlight:false,lastSync:null,error:null,source:'backend'};
+  const unwrap=r=>r&&r.data!=null?r.data:r;
+  const arr=(d,keys)=>{if(Array.isArray(d))return d;for(const k of keys){if(Array.isArray(d?.[k]))return d[k]}return[]};
+  async function syncAdmin(){
+    if(SYNC.inFlight || !adminSession()?.token || !window.TREDIN_API?.baseUrl) return false;
+    SYNC.inFlight=true; SYNC.error=null;
+    try{
+      const jobs=await Promise.allSettled([
+        window.TREDIN_API.admin.users(),
+        window.TREDIN_API.admin.orders(),
+        window.TREDIN_API.admin.risk(),
+        window.TREDIN_API.admin.audit(),
+        window.TREDIN_API.account.kyc()
+      ]);
+      const [users,orders,risk,audit,kyc]=jobs;
+      if(users.status==='fulfilled'){const d=unwrap(users.value);const v=arr(d,['users','items','results']);if(v.length||Array.isArray(d))state.users=v;}
+      if(orders.status==='fulfilled'){const d=unwrap(orders.value);const v=arr(d,['orders','items','results']);if(v.length||Array.isArray(d))state.orders=v;}
+      if(risk.status==='fulfilled'){const d=unwrap(risk.value);if(d?.positions)state.positions=d.positions; if(d?.risk)state.risk=d.risk;}
+      if(audit.status==='fulfilled'){const d=unwrap(audit.value);const v=arr(d,['audit','items','events','results']);if(v.length||Array.isArray(d))state.audit=v;}
+      if(kyc.status==='fulfilled'){const d=unwrap(kyc.value);const v=arr(d,['queue','kycQueue','items','results']);if(v.length||Array.isArray(d))state.kycQueue=v;}
+      SYNC.lastSync=new Date().toISOString();
+      if(typeof render==='function')render();
+      return true;
+    }catch(e){SYNC.error=e?.message||'Backend synchronization failed.';console.warn('TredIN admin sync',e);return false}
+    finally{SYNC.inFlight=false}
+  }
+  window.TREDIN_ADMIN_SYNC.refresh=syncAdmin;
+  window.addEventListener('focus',()=>syncAdmin());
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncAdmin()});
+  window.addEventListener('tredin:server-state-changed',()=>syncAdmin());
+  const oldRender=window.render;
+  window.render=function(){const r=oldRender.apply(this,arguments);if(window.TREDIN_API?.baseUrl && adminSession()?.token && !SYNC.lastSync)syncAdmin();return r};
+  syncAdmin();
+})();
+</script>
+<script id="tredin-preapi-final-lock">
+/* FINAL PRE-API LOCK — no simulated market, execution, funds, KYC, or admin mutations.
+   Backend/RMS is authoritative. Missing backend contracts remain explicitly gated. */
+(function(){
+  window.TREDIN_PREAPI_LOCK = {
+    serverAuthoritative:true,
+    fakeMarket:false,
+    fakeExecution:false,
+    fakeFinancialMutation:false,
+    crossRoleBrowserSync:false,
+    apiRequiredForMutations:true
+  };
+})();
+</script>
+<script id="tredin-admin-preapi-hardening">
+(() => {
+  const block = (msg) => () => toast(msg);
+  window.toggleInstrument = block("Instrument status API is not configured. No local change was made.");
+  window.saveInstrument = block("Instrument master API is not configured. No local instrument will be created.");
+  window.saveTicket = block("Support ticket API is not configured. No local ticket mutation was made.");
+  window.saveSettings = block("Platform settings API is not configured. No local settings mutation was made.");
+  window.kycSetCheck = block("KYC review-check API is not configured. No local review decision was recorded.");
+  window.genReport = block("Report API/export contract is not configured. No local report was generated.");
+})();
+</script>
+</body>
+</html>
